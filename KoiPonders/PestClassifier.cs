@@ -5,16 +5,13 @@ namespace KoiPonders;
 
 public static class PestClassifier
 {
-    // Flip to false the moment your APIM key lands.
-
-
     public static bool UseStub = false;
 
     private const string ChatUrl = "https://ist-apim-aoai.azure-api.net/load-balancing/gpt-4o/openai/deployments/gpt-4o/chat/completions?api-version=2024-10-21";
-    private const string ApiKey = "youraikey";
+    private const string ApiKey = "REMOVED_OPENAI_API_KEY";
 
-    //private const string KeyHeader = "Ocp-Apim-Subscription-Key";
     private const string KeyHeader = "api-key";
+
     private static readonly HttpClient Http = new()
     {
         Timeout = TimeSpan.FromSeconds(45)
@@ -147,6 +144,79 @@ public static class PestClassifier
         {
             System.Diagnostics.Debug.WriteLine($"[PestClassifier] {ex.Message}");
             return null;
+        }
+    }
+
+    // ---------- dashboard summary ----------
+
+    public static async Task<string> SummarizeAsync(IEnumerable<Incident> incidents)
+    {
+        var list = incidents.ToList();
+        if (list.Count == 0) return "No incidents logged yet.";
+
+        var digest = string.Join("\n", list.Select(i =>
+            $"- {i.ReportDate:MMM dd}: {i.PestName} ({i.Classification}), " +
+            $"severity {i.Severity}, field {i.FieldName}, crop {i.AffectedCrop}"));
+
+        if (UseStub)
+        {
+            await Task.Delay(1200);
+            var worst = list.OrderByDescending(i => i.Severity == "CRITICAL" ? 3
+                                                  : i.Severity == "HIGH" ? 2 : 1).First();
+            return $"{list.Count} incident(s) logged across " +
+                   $"{list.Select(i => i.FieldName).Distinct().Count()} field(s). " +
+                   $"Highest concern is {worst.PestName} at {worst.Severity} severity in {worst.FieldName}. " +
+                   $"Recommend scouting adjacent parcels within the spread radius.";
+        }
+
+        try
+        {
+            var payload = new
+            {
+                max_tokens = 400,
+                temperature = 0.3,
+                messages = new object[]
+                {
+                    new
+                    {
+                        role = "system",
+                        content = "You are an agronomy analyst. Write 2-3 concise sentences. No markdown, no bullet points."
+                    },
+                    new
+                    {
+                        role = "user",
+                        content =
+                            "Summarize these farm incident records for a dashboard. " +
+                            "Note any pattern, the most urgent threat, and one recommended action.\n\n" + digest
+                    }
+                }
+            };
+
+            var req = new HttpRequestMessage(HttpMethod.Post, ChatUrl);
+            req.Headers.Add(KeyHeader, ApiKey);
+            req.Content = new StringContent(
+                JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+            var resp = await Http.SendAsync(req);
+            var body = await resp.Content.ReadAsStringAsync();
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Summarize] {resp.StatusCode}: {body}");
+                return "Summary unavailable — check connection.";
+            }
+
+            using var doc = JsonDocument.Parse(body);
+            return doc.RootElement
+                      .GetProperty("choices")[0]
+                      .GetProperty("message")
+                      .GetProperty("content").GetString()
+                   ?? "Summary unavailable.";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Summarize] {ex.Message}");
+            return "Summary unavailable.";
         }
     }
 
