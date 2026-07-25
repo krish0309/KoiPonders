@@ -41,7 +41,7 @@ public partial class IncidentReportPage : ContentPage
         {
             if (!MediaPicker.Default.IsCaptureSupported)
             {
-                await DisplayAlert("Camera unavailable",
+                await DisplayAlertAsync("Camera unavailable",
                     "No camera on this device — use Upload Photo instead.", "OK");
                 return;
             }
@@ -51,7 +51,7 @@ public partial class IncidentReportPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Camera error", ex.Message, "OK");
+            await DisplayAlertAsync("Camera error", ex.Message, "OK");
         }
     }
 
@@ -83,7 +83,7 @@ public partial class IncidentReportPage : ContentPage
 
         if (_photo is null && text.Length < 5)
         {
-            await DisplayAlert("Nothing to analyze",
+            await DisplayAlertAsync("Nothing to analyze",
                 "Add a photo or describe what you're seeing.", "OK");
             return;
         }
@@ -151,7 +151,7 @@ public partial class IncidentReportPage : ContentPage
     {
         if (string.IsNullOrWhiteSpace(ProblemEntry.Text))
         {
-            await DisplayAlert("Missing problem", "Give the problem a name.", "OK");
+            await DisplayAlertAsync("Missing problem", "Give the problem a name.", "OK");
             return;
         }
 

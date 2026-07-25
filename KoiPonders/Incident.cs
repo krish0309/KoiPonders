@@ -1,4 +1,4 @@
-﻿using Esri.ArcGISRuntime.Geometry;
+using Esri.ArcGISRuntime.Geometry;
 using KoiPonders.Mvvm;
 
 namespace KoiPonders;
@@ -11,6 +11,7 @@ public class Incident : ObservableObject
     private string _affectedCrop = "";
     private string _status = "OPEN";
     private string _notes = "";
+    private string _treatment = "";
     private string _fieldName = "";
     private bool _isExpanded;
 
@@ -52,6 +53,12 @@ public class Incident : ObservableObject
     {
         get => _notes;
         set => SetProperty(ref _notes, value);
+    }
+
+    public string Treatment
+    {
+        get => _treatment;
+        set => SetProperty(ref _treatment, value);
     }
 
     public string FieldName
