@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:esri="http://schemas.esri.com/arcgis/runtime/2013"
+             xmlns:local="clr-namespace:KoiPonders"
+             x:Class="KoiPonders.MainPage"
+             x:DataType="local:MapViewModel"
+             >
+
+    <Grid>
+         <esri:MapView x:Name="mapView" Map="{Binding Map}" />
+    </Grid>
+</ContentPage>
