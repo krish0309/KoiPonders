@@ -28,7 +28,7 @@ public partial class MainPage : ContentPage
     private readonly Dictionary<Graphic, Incident> _incidentGraphics = new();
     private readonly Dictionary<Graphic, Parcel> _parcelGraphics = new();
 
-    private readonly IReportStore? _reportStore;
+    private readonly IReportStore _reportStore;
 
     private bool _awaitingIncidentTap;
     private bool _loaded;
@@ -46,7 +46,7 @@ public partial class MainPage : ContentPage
         BindingContext = _viewModel;
 
         // Optional — the reporting feature may not be registered.
-        _reportStore = MauiProgram.Services?.GetService<IReportStore>();
+        _reportStore = MauiProgram.Services.GetRequiredService<IReportStore>();
 
         mapView.GraphicsOverlays ??= new GraphicsOverlayCollection();
         mapView.GraphicsOverlays.Add(_parcelOverlay);
@@ -248,7 +248,7 @@ public partial class MainPage : ContentPage
         _parcels.FirstOrDefault(p =>
             p.Geometry is not null &&
             GeometryEngine.Intersects(
-                GeometryEngine.Project(p.Geometry, location.SpatialReference),
+                GeometryEngine.Project(p.Geometry, location.SpatialReference ?? SpatialReferences.Wgs84),
                 location))?.Name ?? "Unassigned";
 
     // ---------- tools ----------
@@ -380,7 +380,7 @@ public partial class MainPage : ContentPage
     private async void OnRemoveParcelClicked(object? sender, EventArgs e)
     {
         if (sender is not Element { BindingContext: Parcel parcel }) return;
-        bool confirm = await DisplayAlert("Remove parcel", $"Remove \"{parcel.Name}\"? This cannot be undone.", "Remove", "Cancel");
+        bool confirm = await DisplayAlertAsync("Remove parcel", $"Remove \"{parcel.Name}\"? This cannot be undone.", "Remove", "Cancel");
         if (!confirm) return;
         _parcels.Remove(parcel);
         RedrawParcels();
@@ -549,13 +549,7 @@ public partial class MainPage : ContentPage
             ParcelCountLabel.Text = $"{_incidents.Count} Total";
     }
 
-    private static string MapSeverity(Models.Severity severity) => severity switch
-    {
-        Models.Severity.Critical => "CRITICAL",
-        Models.Severity.High => "HIGH",
-        Models.Severity.Moderate => "MEDIUM",
-        _ => "LOW"
-    };
+
 
     private void DrawIncident(Incident inc)
     {
@@ -701,7 +695,7 @@ public partial class MainPage : ContentPage
     private async void OnRemoveIncidentClicked(object? sender, EventArgs e)
     {
         if (sender is not Element { BindingContext: Incident incident }) return;
-        bool confirm = await DisplayAlert("Remove record", $"Remove the \"{incident.PestName}\" report? This cannot be undone.", "Remove", "Cancel");
+        bool confirm = await DisplayAlertAsync("Remove record", $"Remove the \"{incident.PestName}\" report? This cannot be undone.", "Remove", "Cancel");
         if (!confirm) return;
         if (incident.ReportId != Guid.Empty) await _reportStore.DeleteReportAsync(incident.ReportId);
         _incidents.Remove(incident);
