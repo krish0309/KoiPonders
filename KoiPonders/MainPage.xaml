@@ -128,9 +128,10 @@
         </Grid>
 
         <!-- ============ PARCEL PANEL ============ -->
+        <!-- ============ PARCEL PANEL ============ -->
         <Grid x:Name="ParcelPanel"
               Grid.Column="1"
-              RowDefinitions="Auto,*,Auto"
+              RowDefinitions="Auto,Auto,*,Auto"
               Padding="20,24" RowSpacing="14">
 
             <!-- tab switcher -->
