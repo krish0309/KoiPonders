@@ -206,18 +206,18 @@ namespace KoiPonders.ViewModels
 				FileResult? photo = null;
 				if (MediaPicker.Default.IsCaptureSupported)
 				{
-					var action = await Shell.Current.CurrentPage.DisplayActionSheet(
+					var action = await Shell.Current.CurrentPage.DisplayActionSheetAsync(
 						"Add photo", "Cancel", null, "Take photo", "Choose from library");
 					photo = action switch
 					{
 						"Take photo" => await MediaPicker.Default.CapturePhotoAsync(),
-						"Choose from library" => await MediaPicker.Default.PickPhotoAsync(),
+						"Choose from library" => (await MediaPicker.Default.PickPhotosAsync()).FirstOrDefault(),
 						_ => null
 					};
 				}
 				else
 				{
-					photo = await MediaPicker.Default.PickPhotoAsync();
+					photo = (await MediaPicker.Default.PickPhotosAsync()).FirstOrDefault();
 				}
 
 				if (photo is null)
@@ -230,7 +230,7 @@ namespace KoiPonders.ViewModels
 			}
 			catch (FeatureNotSupportedException)
 			{
-				await Shell.Current.CurrentPage.DisplayAlert(
+				await Shell.Current.CurrentPage.DisplayAlertAsync(
 					"Not supported", "Photo capture is not supported on this device.", "OK");
 			}
 		}
@@ -297,7 +297,7 @@ namespace KoiPonders.ViewModels
 		{
 			if (string.IsNullOrWhiteSpace(ProblemName))
 			{
-				await Shell.Current.CurrentPage.DisplayAlert(
+				await Shell.Current.CurrentPage.DisplayAlertAsync(
 					"Missing info", "Please enter the problem name.", "OK");
 				return;
 			}
@@ -311,7 +311,7 @@ namespace KoiPonders.ViewModels
 
 		private async Task DeleteAsync()
 		{
-			var confirm = await Shell.Current.CurrentPage.DisplayAlert(
+			var confirm = await Shell.Current.CurrentPage.DisplayAlertAsync(
 				"Delete report", "Delete this report permanently?", "Delete", "Cancel");
 			if (!confirm)
 			{
