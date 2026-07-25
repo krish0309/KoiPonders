@@ -14,6 +14,7 @@ namespace KoiPonders;
 
 public partial class MainPage : ContentPage
 {
+    private readonly MapViewModel _viewModel;
     private readonly GeometryEditor _geometryEditor = new();
     private readonly GraphicsOverlay _parcelOverlay = new();
     private readonly GraphicsOverlay _threatOverlay = new();
@@ -36,7 +37,8 @@ public partial class MainPage : ContentPage
     public MainPage()
     {
         InitializeComponent();
-        BindingContext = new MapViewModel();
+        _viewModel = new MapViewModel();
+        BindingContext = _viewModel;
 
         _reportStore = MauiProgram.Services.GetRequiredService<IReportStore>();
 
@@ -54,12 +56,21 @@ public partial class MainPage : ContentPage
         ParcelList.ItemsSource = _parcels;
     }
 
-    // Reload saved reports whenever the page appears — including when the user returns
-    // from the report form — so newly saved reports show up on the map immediately.
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await ReloadReportsAsync();
+
+        try
+        {
+            StatusLabel.Text = "Loading local farm imagery…";
+            await _viewModel.InitializeAsync();
+            StatusLabel.Text = "WGS84 • EPSG:3857";
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = "Farm imagery failed to load";
+            await DisplayAlert("Imagery unavailable", ex.Message, "OK");
+        }
     }
 
     // ---------- tools ----------
