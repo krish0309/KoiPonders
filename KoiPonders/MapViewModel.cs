@@ -26,6 +26,28 @@ namespace KoiPonders
             };
         }
 
+        public Task InitializeAsync() => _initializationTask ??= InitializeCoreAsync();
+
+        private async Task InitializeCoreAsync()
+        {
+            var localPath = Path.Combine(FileSystem.AppDataDirectory, CachedImageryFileName);
+            if (!File.Exists(localPath))
+            {
+                await using var source = await FileSystem.OpenAppPackageFileAsync(CachedImageryFileName);
+                await using var destination = File.Create(localPath);
+                await source.CopyToAsync(destination);
+            }
+
+            var imageryLayer = new RasterLayer(new Raster(localPath))
+            {
+                InitialViewpoint = new Viewpoint(37.6420, -100.8790, 40000)
+
+            };
+            Map.OperationalLayers.Add(imageryLayer);
+            await imageryLayer.LoadAsync();
+            Map.MaxExtent = imageryLayer.FullExtent;
+        }
+
         private Map _map;
 
         /// <summary>
