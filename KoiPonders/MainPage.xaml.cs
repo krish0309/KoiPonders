@@ -19,6 +19,7 @@ public partial class MainPage : ContentPage
     private readonly GraphicsOverlay _parcelOverlay = new();
     private readonly GraphicsOverlay _threatOverlay = new();
     private readonly GraphicsOverlay _riskOverlay = new();
+    private readonly GraphicsOverlay _neighborOverlay = new();
     private readonly GraphicsOverlay _incidentOverlay = new();
 
     private readonly ObservableCollection<Parcel> _parcels = new();
@@ -27,6 +28,7 @@ public partial class MainPage : ContentPage
     // Maps drawn graphics back to their source data so a map tap can surface attributes.
     private readonly Dictionary<Graphic, Incident> _incidentGraphics = new();
     private readonly Dictionary<Graphic, Parcel> _parcelGraphics = new();
+    private readonly Dictionary<Graphic, NeighborFarm> _neighborGraphics = new();
 
     private readonly IReportStore _reportStore;
 
@@ -52,6 +54,7 @@ public partial class MainPage : ContentPage
         mapView.GraphicsOverlays.Add(_parcelOverlay);
         mapView.GraphicsOverlays.Add(_threatOverlay);
         mapView.GraphicsOverlays.Add(_riskOverlay);
+        mapView.GraphicsOverlays.Add(_neighborOverlay);
         mapView.GraphicsOverlays.Add(_incidentOverlay);
 
         mapView.GeometryEditor = _geometryEditor;
@@ -132,6 +135,7 @@ public partial class MainPage : ContentPage
         PanelToggleButton.Text = "☰";
         SemanticProperties.SetDescription(PanelToggleButton, "Open parcels and records");
     }
+
     // ---------- startup ----------
 
     protected override async void OnAppearing()
@@ -183,6 +187,7 @@ public partial class MainPage : ContentPage
                 await mapView.SetViewpointGeometryAsync(geometry, 120);
         }
 
+        await DrawNeighborsAsync();
         await LoadIncidentsAsync();
     }
 
@@ -194,6 +199,7 @@ public partial class MainPage : ContentPage
     {
         _incidents.Clear();
         _incidentOverlay.Graphics.Clear();
+        _incidentGraphics.Clear();
 
         var (_, saved) = await FarmStore.LoadAsync();
         foreach (var inc in saved)
@@ -222,6 +228,7 @@ public partial class MainPage : ContentPage
                     Notes = report.Notes,
                     ReportDate = report.ObservedUtc.LocalDateTime,
                     Location = location,
+                    ReportId = report.Id,
                     FieldName = FieldNameAt(location)
                 };
 
@@ -250,6 +257,90 @@ public partial class MainPage : ContentPage
             GeometryEngine.Intersects(
                 GeometryEngine.Project(p.Geometry, location.SpatialReference ?? SpatialReferences.Wgs84),
                 location))?.Name ?? "Unassigned";
+
+    // ---------- neighbouring farms ----------
+
+    private async Task DrawNeighborsAsync()
+    {
+        _neighborOverlay.Graphics.Clear();
+        _neighborGraphics.Clear();
+
+        var farms = await AlertService.GetFarmsAsync();
+
+        var symbol = new SimpleMarkerSymbol(
+            SimpleMarkerSymbolStyle.Square,
+            Color.FromArgb(215, 96, 165, 250), 11)
+        {
+            Outline = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, Color.White, 1.5f)
+        };
+
+        foreach (var farm in farms)
+        {
+            if (farm.Location is null) continue;
+
+            var graphic = new Graphic(farm.Location, symbol);
+            _neighborOverlay.Graphics.Add(graphic);
+            _neighborGraphics[graphic] = farm;
+
+            var label = new TextSymbol(
+                $"{farm.FarmName}\n{farm.Crop}",
+                Color.FromArgb(255, 191, 219, 254), 9,
+                Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Center,
+                Esri.ArcGISRuntime.Symbology.VerticalAlignment.Top)
+            {
+                HaloColor = Color.FromArgb(205, 12, 26, 46),
+                HaloWidth = 2,
+                OffsetY = -14
+            };
+            _neighborOverlay.Graphics.Add(new Graphic(farm.Location, label));
+        }
+    }
+
+    private async Task RunAlertsAsync(Incident incident)
+    {
+        if (incident.Location is null) return;
+
+        if (!incident.AlertNeighbors)
+        {
+            incident.AlertedFarmCount = 0;
+            return;
+        }
+
+        var farms = await AlertService.GetFarmsAsync();
+
+        if (farms.Count == 0)
+        {
+            farms = await AlertService.SeedAroundAsync(incident.Location);
+            await DrawNeighborsAsync();
+        }
+
+        var recipients = AlertService.ComputeRecipients(
+            incident, farms, incident.AlertRadiusMiles);
+
+        incident.AlertedFarmCount = recipients.Count;
+
+        if (recipients.Count == 0)
+        {
+            await DisplayAlertAsync("No alerts sent",
+                $"No farms within {incident.AlertRadiusMiles:F0} miles are growing a crop " +
+                $"susceptible to {incident.PestName}.", "OK");
+            return;
+        }
+
+        double acres = recipients.Sum(r => r.Farm.Acres);
+
+        var lines = string.Join("\n\n", recipients.Select(r =>
+            $"• {r.Farm.FarmName} — {r.Farm.Owner}\n" +
+            $"   {r.DistanceMiles:F1} mi · {r.Farm.Crop}\n" +
+            $"   Matched: {r.Reason}"));
+
+        await DisplayAlertAsync(
+            $"Alerted {recipients.Count} farm(s)",
+            $"{acres:F0} acres of susceptible crop within " +
+            $"{incident.AlertRadiusMiles:F0} miles of this {incident.Severity} " +
+            $"{incident.PestName} report.\n\n{lines}",
+            "Done");
+    }
 
     // ---------- tools ----------
 
@@ -358,6 +449,17 @@ public partial class MainPage : ContentPage
 
         ParcelCountLabel.Text = $"{_parcels.Count} total";
 
+        // Seed the neighbour registry around the first field the farmer maps.
+        if (_parcels.Count == 1 && polygon.Extent?.GetCenter() is { } centre)
+        {
+            var existing = await AlertService.GetFarmsAsync();
+            if (existing.Count == 0)
+            {
+                await AlertService.SeedAroundAsync(centre);
+                await DrawNeighborsAsync();
+            }
+        }
+
         // Boundaries changed — recompute exposure.
         if (_incidents.Count > 0) RunRiskAnalysis();
         await FarmStore.SaveAsync(_parcels, _incidents);
@@ -441,6 +543,7 @@ public partial class MainPage : ContentPage
             ParcelCountLabel.Text = $"{_incidents.Count} total";
 
         await FarmStore.SaveAsync(_parcels, _incidents);
+        await RunAlertsAsync(incident);
     }
 
     // Identifies the tapped graphic (incident pins take priority over parcels) and
@@ -456,6 +559,16 @@ public partial class MainPage : ContentPage
                 _incidentGraphics.TryGetValue(incidentGraphic, out var incident))
             {
                 await ShowIncidentDetailsAsync(incident);
+                return;
+            }
+
+            var neighborHit = await mapView.IdentifyGraphicsOverlayAsync(
+                _neighborOverlay, screenPoint, 12, false, 1);
+
+            if (neighborHit.Graphics.FirstOrDefault() is { } neighborGraphic &&
+                _neighborGraphics.TryGetValue(neighborGraphic, out var farm))
+            {
+                await ShowNeighborDetailsAsync(farm);
                 return;
             }
 
@@ -481,15 +594,30 @@ public partial class MainPage : ContentPage
             $"Status:    {incident.Status}\n" +
             $"Category:  {incident.Classification}\n" +
             $"Field:     {incident.FieldName}\n" +
-            $"Reported:  {incident.DateDisplay}";
+            $"Reported:  {incident.DateDisplay}\n" +
+            $"Sharing:   {incident.AlertDisplay}";
 
         if (!string.IsNullOrWhiteSpace(incident.Notes))
             details += $"\n\nNotes:\n{incident.Notes}";
+
+        if (!string.IsNullOrWhiteSpace(incident.Treatment))
+            details += $"\n\nRecommended action:\n{incident.Treatment}";
 
         var title = string.IsNullOrWhiteSpace(incident.PestName)
             ? "Report" : incident.PestName;
 
         await DisplayAlertAsync(title, details, "Close");
+    }
+
+    private async Task ShowNeighborDetailsAsync(NeighborFarm farm)
+    {
+        var details =
+            $"Owner:  {farm.Owner}\n" +
+            $"Crop:   {farm.Crop}\n" +
+            $"Area:   {farm.Acres:F1} Ac\n\n" +
+            "Registered on FarmGuard — receives alerts for nearby outbreaks affecting this crop.";
+
+        await DisplayAlertAsync(farm.FarmName, details, "Close");
     }
 
     private async Task ShowParcelDetailsAsync(Parcel parcel)
@@ -504,52 +632,6 @@ public partial class MainPage : ContentPage
 
         await DisplayAlertAsync(parcel.Name, details, "Close");
     }
-
-    // Rebuilds the incident pins and risk analysis from the saved reports so that the
-    // existing FarmGuard threat-assessment logic keeps working with form-entered reports.
-    private async Task ReloadReportsAsync()
-    {
-        var reports = await _reportStore.GetReportsAsync();
-
-        _incidents.Clear();
-        _incidentOverlay.Graphics.Clear();
-        _incidentGraphics.Clear();
-
-        foreach (var report in reports)
-        {
-            if (!report.HasLocation) continue;
-
-            var location = new MapPoint(
-                report.Longitude!.Value, report.Latitude!.Value, SpatialReferences.Wgs84);
-
-            var incident = new Incident
-            {
-                PestName = report.ProblemName,
-                Classification = report.Category.ToString(),
-                Severity = MapSeverity(report.Severity),
-                Status = report.Status.ToString(),
-                Notes = report.Notes,
-                ReportDate = report.ObservedUtc.LocalDateTime,
-                Location = location,
-                ReportId = report.Id,
-                FieldName = _parcels.FirstOrDefault(p =>
-                    p.Geometry is not null &&
-                    GeometryEngine.Intersects(
-                        GeometryEngine.Project(p.Geometry, SpatialReferences.Wgs84),
-                        location))?.Name ?? "Unassigned"
-            };
-
-            _incidents.Add(incident);
-            DrawIncident(incident);
-        }
-
-        RunRiskAnalysis();
-
-        if (RecordsContainer.IsVisible)
-            ParcelCountLabel.Text = $"{_incidents.Count} Total";
-    }
-
-
 
     private void DrawIncident(Incident inc)
     {
@@ -703,6 +785,7 @@ public partial class MainPage : ContentPage
         if (graphic is not null) { _incidentOverlay.Graphics.Remove(graphic); _incidentGraphics.Remove(graphic); }
         RunRiskAnalysis();
         if (RecordsContainer.IsVisible) ParcelCountLabel.Text = $"{_incidents.Count} Total";
+        await FarmStore.SaveAsync(_parcels, _incidents);
     }
 
     private async void OnGenerateSummary(object sender, EventArgs e)

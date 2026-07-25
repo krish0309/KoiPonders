@@ -136,6 +136,23 @@ public partial class IncidentReportPage : ContentPage
         SeverityPicker.SelectedItem =
             (SeverityPicker.ItemsSource as List<string>)?
             .FirstOrDefault(s => s == _draft.Severity) ?? "MEDIUM";
+
+        // Nudge the default alert radius to match how far this thing actually spreads.
+        double km = RiskEngine.RadiusMetersFor(_draft.Severity) / 1000.0;
+        double miles = Math.Round(km * 0.621371 * 2, 1);
+        RadiusSlider.Value = Math.Clamp(miles < 1 ? 5 : miles, 1, 25);
+    }
+
+    // ---------- alerting ----------
+
+    private void OnAlertToggled(object sender, ToggledEventArgs e)
+    {
+        RadiusBlock.IsVisible = e.Value;
+    }
+
+    private void OnRadiusChanged(object sender, ValueChangedEventArgs e)
+    {
+        RadiusLabel.Text = $"Alert radius: {e.NewValue:F1} miles";
     }
 
     // ---------- step 2 ----------
@@ -170,7 +187,9 @@ public partial class IncidentReportPage : ContentPage
             Location = _location,
             Photo = _photo,
             ReportDate = DateTime.Now,
-            Status = "OPEN"
+            Status = "OPEN",
+            AlertNeighbors = AlertSwitch.IsToggled,
+            AlertRadiusMiles = RadiusSlider.Value
         };
 
         _tcs.TrySetResult(incident);
