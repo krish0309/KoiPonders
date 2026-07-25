@@ -120,8 +120,6 @@
 
         </Grid>
 
-        <!-- ============ RIGHT PANEL ============ -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto"
         <!-- ============ PARCEL PANEL ============ -->
         <Grid x:Name="ParcelPanel"
               Grid.Column="1"
