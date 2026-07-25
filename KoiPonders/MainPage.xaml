@@ -34,36 +34,30 @@
         <Grid x:Name="MapPanel">
             <esri:MapView x:Name="mapView" Map="{Binding Map}" />
 
-            <!-- Compact map identity keeps context without competing with the map. -->
+            <!-- Compact farm identity header. -->
             <Border Style="{StaticResource OverlayCardStyle}"
-                    Margin="16" Padding="14,10"
+                    Margin="12" Padding="7,5"
                     HorizontalOptions="Start" VerticalOptions="Start">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
+                    <RoundRectangle CornerRadius="12" />
                 </Border.StrokeShape>
-                <HorizontalStackLayout Spacing="10">
-                    <Border BackgroundColor="#2E7D32" Stroke="Transparent"
-                            WidthRequest="34" HeightRequest="34" Padding="0">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="10" />
-                        </Border.StrokeShape>
-                        <Label Text="⌖" TextColor="White" FontSize="20"
-                               HorizontalOptions="Center" VerticalOptions="Center" />
-                    </Border>
+                <HorizontalStackLayout Spacing="6">
                     <Image Source="farmassist_logo.png"
-                           WidthRequest="72" HeightRequest="72"
+                           WidthRequest="52" HeightRequest="52"
                            Aspect="AspectFit"
                            SemanticProperties.Description="FarmAssist logo" />
                     <VerticalStackLayout Spacing="0" VerticalOptions="Center">
-                        <Label Text="FarmAssist" FontSize="15" FontAttributes="Bold" FontFamily="SpaceGrotesk" TextColor="#2E4735" />
-                        <Label Text="Field intelligence map" FontSize="10" TextColor="#63776C" />
+                        <Label Text="My Farm" FontSize="9" FontAttributes="Bold"
+                               FontFamily="SpaceGrotesk" TextColor="#2E7D32" />
+                        <Label Text="124 Beech Hill Rd · Hopkinton, NH 03229"
+                               FontSize="10" TextColor="#2E4735" />
                     </VerticalStackLayout>
                 </HorizontalStackLayout>
             </Border>
 
             <Border x:Name="LiveAreaPanel" IsVisible="False"
                     BackgroundColor="#E615803D" Stroke="Transparent"
-                    Padding="14,8" Margin="16,82,0,0"
+                    Padding="14,8" Margin="16,76,0,0"
                     HorizontalOptions="Start" VerticalOptions="Start">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="12" />
@@ -72,21 +66,10 @@
                        FontSize="14" FontAttributes="Bold" FontFamily="SpaceGrotesk" />
             </Border>
 
-            <Border x:Name="StatusPanel"
-                    BackgroundColor="#E6132A20" Stroke="Transparent"
-                    Padding="12,7" Margin="16"
-                    HorizontalOptions="Start" VerticalOptions="End">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="12" />
-                </Border.StrokeShape>
-                <Label x:Name="StatusLabel" Text="WGS84 • EPSG:3857"
-                       TextColor="White" FontSize="11" />
-            </Border>
-
             <Border x:Name="ThreatPanel" IsVisible="False"
                     Style="{StaticResource OverlayCardStyle}"
                     Stroke="#F59E0B" StrokeThickness="2"
-                    Padding="16,12" Margin="16,82,16,16" WidthRequest="310"
+                    Padding="16,12" Margin="16,76,16,16" WidthRequest="310"
                     HorizontalOptions="End" VerticalOptions="Start">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="16" />
@@ -146,7 +129,6 @@
                     <Button Grid.Column="1" Text="✕" Clicked="OnClosePanelClicked"
                             BackgroundColor="#EDF3EF" TextColor="#315440"
                             WidthRequest="42" HeightRequest="42" Padding="0" CornerRadius="21"
-                            WidthRequest="72" HeightRequest="72" Padding="0" CornerRadius="21"
                             SemanticProperties.Description="Close field workspace" />
                 </Grid>
 
@@ -318,10 +300,6 @@
         <VerticalStackLayout x:Name="ActionMenu" IsVisible="False" ZIndex="45"
                              Spacing="9" Margin="0,0,16,94"
                              HorizontalOptions="End" VerticalOptions="End">
-            <Button x:Name="ConfirmButton" Text="✓   Confirm boundary" Clicked="OnConfirmClicked"
-                    IsEnabled="False" Style="{StaticResource ActionButtonStyle}" />
-            <Button Text="↶   Undo last point" Clicked="OnUndoClicked"
-                    Style="{StaticResource ActionButtonStyle}" />
             <Button x:Name="FreehandToolButton" Text="✎   Draw freehand" Clicked="OnFreehandToolClicked"
                     Style="{StaticResource ActionButtonStyle}" />
             <Button x:Name="PolygonToolButton" Text="⬡   Draw polygon" Clicked="OnPolygonToolClicked"
@@ -332,12 +310,8 @@
 			<Button x:Name="ModelSpreadButton" Text="🔥   Model spread" Clicked="OnModelSpreadClicked"
 					BackgroundColor="#C2410C" TextColor="White" FontSize="14" FontAttributes="Bold" FontFamily="SpaceGrotesk"
 					HeightRequest="48" CornerRadius="24" Padding="18,0" HorizontalOptions="End" />
-            <Button Text="✦   Test AI" Clicked="OnTestAiClicked"
-                    BackgroundColor="#6D4CCF" TextColor="White" FontSize="14" FontAttributes="Bold" FontFamily="SpaceGrotesk"
-                    HeightRequest="48" CornerRadius="24" Padding="18,0" HorizontalOptions="End" />
         </VerticalStackLayout>
 
-        <HorizontalStackLayout ZIndex="50" Spacing="10" Margin="0,0,16,18"
         <Button x:Name="ConfirmButton" Text="✓   Confirm boundary" Clicked="OnConfirmClicked"
                 IsVisible="False" IsEnabled="False" ZIndex="45"
                 Margin="16,0,16,94" HorizontalOptions="Center" VerticalOptions="End"
@@ -347,22 +321,21 @@
                                HorizontalOptions="End" VerticalOptions="End">
             <Button x:Name="PanelToggleButton" Text="☰" Clicked="OnTogglePanelClicked"
                     BackgroundColor="White" TextColor="#173F2B"
-                    WidthRequest="58" HeightRequest="58" Padding="0" CornerRadius="29"
-                    FontSize="22" SemanticProperties.Description="Open parcels and records">
+                    WidthRequest="50" HeightRequest="50" Padding="0" CornerRadius="25"
+                    FontSize="19" SemanticProperties.Description="Open parcels and records">
                 <Button.Shadow>
                     <Shadow Brush="#590F2A1D" Offset="0,5" Radius="12" Opacity="0.35" />
                 </Button.Shadow>
             </Button>
             <Button x:Name="ActionMenuButton" Text="＋" Clicked="OnToggleActionMenu"
                     BackgroundColor="#2E7D32" TextColor="White"
-                    WidthRequest="58" HeightRequest="58" Padding="0" CornerRadius="29"
-                    FontSize="30" SemanticProperties.Description="Open map actions">
+                    WidthRequest="50" HeightRequest="50" Padding="0" CornerRadius="25"
+                    FontSize="26" SemanticProperties.Description="Open map actions">
                 <Button.Shadow>
                     <Shadow Brush="#6615803D" Offset="0,6" Radius="14" Opacity="0.45" />
                 </Button.Shadow>
             </Button>
         </HorizontalStackLayout>
-    </Grid>
 
 		<!-- Toggleable spread-forecast layer chip. Appears once a forecast exists. -->
 		<Border x:Name="SpreadLayerChip" IsVisible="False" ZIndex="15"

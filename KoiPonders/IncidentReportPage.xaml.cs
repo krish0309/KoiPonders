@@ -190,7 +190,6 @@ public partial class IncidentReportPage : ContentPage
             Status = "OPEN",
             AlertNeighbors = AlertSwitch.IsToggled,
             AlertRadiusMiles = RadiusSlider.Value
-            Status = "OPEN"
         };
 
         _tcs.TrySetResult(incident);

@@ -16,8 +16,8 @@ public partial class MainPage : ContentPage
 {
     private readonly MapViewModel _viewModel;
     private readonly GeometryEditor _geometryEditor = new();
-    private readonly GraphicsOverlay _areaThreatOverlay = new();
     private readonly GraphicsOverlay _parcelOverlay = new();
+    private readonly GraphicsOverlay _threatOverlay = new();
     private readonly GraphicsOverlay _riskOverlay = new();
     private readonly GraphicsOverlay _neighborOverlay = new();
     private readonly GraphicsOverlay _incidentOverlay = new();
@@ -48,12 +48,12 @@ public partial class MainPage : ContentPage
         _viewModel = new MapViewModel();
         BindingContext = _viewModel;
 
-        // Optional — the reporting feature may not be registered.
+        // Optional ΓÇö the reporting feature may not be registered.
         _reportStore = MauiProgram.Services.GetRequiredService<IReportStore>();
 
         mapView.GraphicsOverlays ??= new GraphicsOverlayCollection();
-        mapView.GraphicsOverlays.Add(_areaThreatOverlay);
         mapView.GraphicsOverlays.Add(_parcelOverlay);
+        mapView.GraphicsOverlays.Add(_threatOverlay);
         mapView.GraphicsOverlays.Add(_riskOverlay);
         mapView.GraphicsOverlays.Add(_neighborOverlay);
         mapView.GraphicsOverlays.Add(_incidentOverlay);
@@ -90,7 +90,7 @@ public partial class MainPage : ContentPage
         var showMenu = !ActionMenu.IsVisible;
         ActionMenu.IsVisible = showMenu;
         ActionMenuBackdrop.IsVisible = showMenu;
-        ActionMenuButton.Text = showMenu ? "×" : "＋";
+        ActionMenuButton.Text = showMenu ? "├ù" : "∩╝ï";
         SemanticProperties.SetDescription(ActionMenuButton, showMenu ? "Close map actions" : "Open map actions");
     }
 
@@ -98,7 +98,7 @@ public partial class MainPage : ContentPage
     {
         ActionMenu.IsVisible = false;
         ActionMenuBackdrop.IsVisible = false;
-        ActionMenuButton.Text = "＋";
+        ActionMenuButton.Text = "∩╝ï";
         SemanticProperties.SetDescription(ActionMenuButton, "Open map actions");
     }
 
@@ -122,7 +122,7 @@ public partial class MainPage : ContentPage
         PanelBackdrop.IsVisible = true;
         ParcelPanel.TranslationX = ParcelPanel.WidthRequest + 32;
         ParcelPanel.IsVisible = true;
-        PanelToggleButton.Text = "×";
+        PanelToggleButton.Text = "├ù";
         SemanticProperties.SetDescription(PanelToggleButton, "Close parcels and records");
         await ParcelPanel.TranslateToAsync(0, 0, 220, Easing.CubicOut);
     }
@@ -134,7 +134,7 @@ public partial class MainPage : ContentPage
         await ParcelPanel.TranslateToAsync(ParcelPanel.WidthRequest + 32, 0, 180, Easing.CubicIn);
         ParcelPanel.IsVisible = false;
         PanelBackdrop.IsVisible = false;
-        PanelToggleButton.Text = "☰";
+        PanelToggleButton.Text = "Γÿ░";
         SemanticProperties.SetDescription(PanelToggleButton, "Open parcels and records");
     }
 
@@ -146,19 +146,22 @@ public partial class MainPage : ContentPage
 
         try
         {
-            StatusLabel.Text = "Loading local farm imagery…";
             await _viewModel.InitializeAsync();
-            StatusLabel.Text = "WGS84 • EPSG:3857";
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = "WGS84 • EPSG:3857";
             System.Diagnostics.Debug.WriteLine($"[Imagery] {ex.Message}");
         }
 
         if (!_loaded)
         {
             _loaded = true;
+
+#if DEBUG
+            FarmStore.Reset();
+            foreach (var report in await _reportStore.GetReportsAsync())
+                await _reportStore.DeleteReportAsync(report.Id);
+#endif
 
             var (parcels, _) = await FarmStore.LoadAsync();
 
@@ -332,8 +335,8 @@ public partial class MainPage : ContentPage
         double acres = recipients.Sum(r => r.Farm.Acres);
 
         var lines = string.Join("\n\n", recipients.Select(r =>
-            $"• {r.Farm.FarmName} — {r.Farm.Owner}\n" +
-            $"   {r.DistanceMiles:F1} mi · {r.Farm.Crop}\n" +
+            $"ΓÇó {r.Farm.FarmName} ΓÇö {r.Farm.Owner}\n" +
+            $"   {r.DistanceMiles:F1} mi ┬╖ {r.Farm.Crop}\n" +
             $"   Matched: {r.Reason}"));
 
         await DisplayAlertAsync(
@@ -343,156 +346,6 @@ public partial class MainPage : ContentPage
             $"{incident.PestName} report.\n\n{lines}",
             "Done");
     }
-
-    private async void OnClosePanelClicked(object? sender, EventArgs e)
-    {
-        await HideWorkspacePanelAsync();
-    }
-
-    private async Task ShowWorkspacePanelAsync()
-    {
-        PanelBackdrop.IsVisible = true;
-        ParcelPanel.TranslationX = ParcelPanel.WidthRequest + 32;
-        ParcelPanel.IsVisible = true;
-        BottomActionControls.IsVisible = false;
-        SemanticProperties.SetDescription(PanelToggleButton, "Close parcels and records");
-        await ParcelPanel.TranslateToAsync(0, 0, 220, Easing.CubicOut);
-    }
-
-    private async Task HideWorkspacePanelAsync()
-    {
-        if (!ParcelPanel.IsVisible) return;
-
-        await ParcelPanel.TranslateToAsync(ParcelPanel.WidthRequest + 32, 0, 180, Easing.CubicIn);
-        ParcelPanel.IsVisible = false;
-        PanelBackdrop.IsVisible = false;
-        BottomActionControls.IsVisible = true;
-        SemanticProperties.SetDescription(PanelToggleButton, "Open parcels and records");
-    }
-    // ---------- startup ----------
-
-    protected override async void OnAppearing()
-    {
-        base.OnAppearing();
-
-        try
-        {
-            StatusLabel.Text = "Loading local farm imagery…";
-            await _viewModel.InitializeAsync();
-            StatusLabel.Text = "WGS84 • EPSG:3857";
-        }
-        catch (Exception ex)
-        {
-            StatusLabel.Text = "WGS84 • EPSG:3857";
-            System.Diagnostics.Debug.WriteLine($"[Imagery] {ex.Message}");
-        }
-
-        if (!_loaded)
-        {
-            _loaded = true;
-
-#if DEBUG
-            FarmStore.Reset();
-            foreach (var report in await _reportStore.GetReportsAsync())
-                await _reportStore.DeleteReportAsync(report.Id);
-#endif
-
-            var (parcels, _) = await FarmStore.LoadAsync();
-
-            foreach (var parcel in parcels)
-            {
-                _parcels.Add(parcel);
-                if (parcel.Geometry is null) continue;
-
-                var parcelGraphic = new Graphic(parcel.Geometry, _parcelSymbol);
-                _parcelOverlay.Graphics.Add(parcelGraphic);
-                _parcelGraphics[parcelGraphic] = parcel;
-
-                var label = new TextSymbol(
-                    $"{parcel.Name}  {parcel.Acres:F1} Ac", Color.White, 11,
-                    Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Center,
-                    Esri.ArcGISRuntime.Symbology.VerticalAlignment.Middle)
-                {
-                    HaloColor = Color.FromArgb(190, 10, 30, 20),
-                    HaloWidth = 2
-                };
-                if (parcel.Geometry.Extent is { } extent)
-                    _parcelOverlay.Graphics.Add(new Graphic(extent.GetCenter(), label));
-            }
-
-            ParcelCountLabel.Text = $"{_parcels.Count} total";
-
-            if (_parcels.FirstOrDefault()?.Geometry is { } geometry)
-                await mapView.SetViewpointGeometryAsync(geometry, 120);
-        }
-
-        await LoadIncidentsAsync();
-    }
-
-    /// <summary>
-    /// Rebuilds pins and risk analysis from BOTH sources: incidents saved by the
-    /// AI report flow, and reports saved by the form-based report store.
-    /// </summary>
-    private async Task LoadIncidentsAsync()
-    {
-        _incidents.Clear();
-        _incidentOverlay.Graphics.Clear();
-
-        var (_, saved) = await FarmStore.LoadAsync();
-        foreach (var inc in saved)
-        {
-            _incidents.Add(inc);
-            DrawIncident(inc);
-        }
-
-        if (_reportStore is not null)
-        {
-            var reports = await _reportStore.GetReportsAsync();
-
-            foreach (var report in reports)
-            {
-                if (!report.HasLocation) continue;
-
-                var location = new MapPoint(
-                    report.Longitude!.Value, report.Latitude!.Value, SpatialReferences.Wgs84);
-
-                var incident = new Incident
-                {
-                    PestName = report.ProblemName,
-                    Classification = report.Category.ToString(),
-                    Severity = MapSeverity(report.Severity),
-                    Status = report.Status.ToString(),
-                    Notes = report.Notes,
-                    ReportDate = report.ObservedUtc.LocalDateTime,
-                    Location = location,
-                    FieldName = FieldNameAt(location)
-                };
-
-                _incidents.Add(incident);
-                DrawIncident(incident);
-            }
-        }
-
-        RunRiskAnalysis();
-
-        if (RecordsContainer.IsVisible)
-            ParcelCountLabel.Text = $"{_incidents.Count} total";
-    }
-
-    private static string MapSeverity(Models.Severity severity) => severity switch
-    {
-        Models.Severity.Critical => "CRITICAL",
-        Models.Severity.High => "HIGH",
-        Models.Severity.Moderate => "MEDIUM",
-        _ => "LOW"
-    };
-
-    private string FieldNameAt(MapPoint location) =>
-        _parcels.FirstOrDefault(p =>
-            p.Geometry is not null &&
-            GeometryEngine.Intersects(
-                GeometryEngine.Project(p.Geometry, location.SpatialReference ?? SpatialReferences.Wgs84),
-                location))?.Name ?? "Unassigned";
 
     // ---------- tools ----------
 
@@ -516,6 +369,7 @@ public partial class MainPage : ContentPage
             _geometryEditor.Start(GeometryType.Polygon);
 
         ConfirmButton.IsEnabled = true;
+        ConfirmButton.IsVisible = true;
     }
 
     private void OnUndoClicked(object sender, EventArgs e)
@@ -523,7 +377,6 @@ public partial class MainPage : ContentPage
         CloseActionMenu();
         if (_geometryEditor.CanUndo)
             _geometryEditor.Undo();
-        ConfirmButton.IsVisible = true;
     }
 
     // ---------- live acreage ----------
@@ -574,11 +427,6 @@ public partial class MainPage : ContentPage
 
         if (string.IsNullOrWhiteSpace(name)) name = fallback;
 
-        string crop = await DisplayPromptAsync(
-            "Crop in this field",
-            "e.g. Yellow Field Corn (Dent)",
-            initialValue: "") ?? "";
-
         double acres = Math.Abs(GeometryEngine.AreaGeodetic(
             polygon, AreaUnits.Acres, GeodeticCurveType.Geodesic));
 
@@ -599,7 +447,6 @@ public partial class MainPage : ContentPage
         var parcel = new Parcel
         {
             Name = name,
-            Crop = crop,
             Acres = acres,
             MappedDate = DateTime.Now,
             Geometry = polygon
@@ -620,7 +467,7 @@ public partial class MainPage : ContentPage
             }
         }
 
-        // Boundaries changed — recompute exposure.
+        // Boundaries changed ΓÇö recompute exposure.
         if (_incidents.Count > 0) RunRiskAnalysis();
         await FarmStore.SaveAsync(_parcels, _incidents);
     }
@@ -674,8 +521,9 @@ public partial class MainPage : ContentPage
         if (_geometryEditor.IsStarted) _geometryEditor.Stop();
 
         _awaitingIncidentTap = true;
-        StatusLabel.Text = "Tap the map where the problem was observed";
     }
+
+
 
 	// ---------- AI spread modeling ----------
 
@@ -823,7 +671,6 @@ public partial class MainPage : ContentPage
 		SpreadResultSection.IsVisible = false;
 		SpreadBusyRow.IsVisible = true;
 		SpreadBusyLabel.Text = $"Modeling spread of {diseaseType}…";
-		StatusLabel.Text = $"Modeling spread of {diseaseType}…";
 
 		try
 		{
@@ -841,7 +688,6 @@ public partial class MainPage : ContentPage
 			{
 				SpreadBusyRow.IsVisible = false;
 				SpreadPickerSection.IsVisible = true;
-				StatusLabel.Text = "WGS84 \u2022 EPSG:3857";
 				await DisplayAlertAsync(
 					"No spread to show",
 					$"located={located.Count}, matching={matching.Count}, points={forecast.Points.Count}. " +
@@ -859,13 +705,11 @@ public partial class MainPage : ContentPage
 
 			SpreadBusyRow.IsVisible = false;
 			SpreadResultSection.IsVisible = true;
-			StatusLabel.Text = "WGS84 • EPSG:3857";
 		}
 		catch (Exception ex)
 		{
 			SpreadBusyRow.IsVisible = false;
 			SpreadPickerSection.IsVisible = true;
-			StatusLabel.Text = "WGS84 • EPSG:3857";
 			await DisplayAlertAsync("Spread model failed", ex.Message, "OK");
 		}
 	}
@@ -928,7 +772,6 @@ public partial class MainPage : ContentPage
         }
 
         _awaitingIncidentTap = false;
-        StatusLabel.Text = "WGS84 • EPSG:3857";
 
         var page = new IncidentReportPage(e.Location);
         await Navigation.PushModalAsync(new NavigationPage(page));
@@ -945,18 +788,6 @@ public partial class MainPage : ContentPage
 
         await FarmStore.SaveAsync(_parcels, _incidents);
         await RunAlertsAsync(incident);
-    }
-
-
-        incident.FieldName = FieldNameAt(e.Location);
-        _incidents.Add(incident);
-        DrawIncident(incident);
-        RunRiskAnalysis();
-
-        if (RecordsContainer.IsVisible)
-            ParcelCountLabel.Text = $"{_incidents.Count} total";
-
-        await FarmStore.SaveAsync(_parcels, _incidents);
     }
 
     // Identifies the tapped graphic (incident pins take priority over parcels) and
@@ -998,11 +829,6 @@ public partial class MainPage : ContentPage
         {
             await DisplayAlertAsync("Unable to inspect", ex.Message, "OK");
         }
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlertAsync("Unable to inspect", ex.Message, "OK");
-        }
     }
 
     private async Task ShowIncidentDetailsAsync(Incident incident)
@@ -1033,7 +859,7 @@ public partial class MainPage : ContentPage
             $"Owner:  {farm.Owner}\n" +
             $"Crop:   {farm.Crop}\n" +
             $"Area:   {farm.Acres:F1} Ac\n\n" +
-            "Registered on FarmGuard — receives alerts for nearby outbreaks affecting this crop.";
+            "Registered on FarmGuard ΓÇö receives alerts for nearby outbreaks affecting this crop.";
 
         await DisplayAlertAsync(farm.FarmName, details, "Close");
     }
@@ -1049,21 +875,11 @@ public partial class MainPage : ContentPage
             $"Reports:   {reportsHere}";
 
         await DisplayAlertAsync(parcel.Name, details, "Close");
-            $"Reported:  {incident.DateDisplay}";
-
-        if (!string.IsNullOrWhiteSpace(incident.Notes))
-            details += $"\n\nNotes:\n{incident.Notes}";
-
-        var title = string.IsNullOrWhiteSpace(incident.PestName)
-            ? "Report" : incident.PestName;
-
-        await DisplayAlertAsync(title, details, "Close");
     }
 
-    private async Task ShowParcelDetailsAsync(Parcel parcel)
+    private void DrawIncident(Incident inc)
     {
-        int reportsHere = _incidents.Count(i =>
-            string.Equals(i.FieldName, parcel.Name, StringComparison.OrdinalIgnoreCase));
+        if (inc.Location is null) return;
 
         var color = inc.Severity switch
         {
@@ -1072,159 +888,36 @@ public partial class MainPage : ContentPage
             "MEDIUM" => Color.FromArgb(255, 202, 138, 4),
             _ => Color.FromArgb(255, 220, 38, 38)
         };
-        var details =
-            $"Area:      {parcel.AcresDisplay}\n" +
-            $"{parcel.MappedDisplay}\n" +
-            $"Reports:   {reportsHere}";
 
-        await DisplayAlertAsync(parcel.Name, details, "Close");
-    }
-
-    // Rebuilds the incident pins and risk analysis from the saved reports so that the
-    // existing FarmGuard threat-assessment logic keeps working with form-entered reports.
-    private async Task ReloadReportsAsync()
-    {
-        var reports = await _reportStore.GetReportsAsync();
-
-        _incidents.Clear();
-        _incidentOverlay.Graphics.Clear();
-        _incidentGraphics.Clear();
-
-        foreach (var report in reports)
+        var symbol = new SimpleMarkerSymbol(SimpleMarkerSymbolStyle.Circle, color, 16)
         {
-            if (!report.HasLocation) continue;
-
-            var location = new MapPoint(
-                report.Longitude!.Value, report.Latitude!.Value, SpatialReferences.Wgs84);
-
-            var incident = new Incident
-            {
-                PestName = report.ProblemName,
-                Classification = report.Category.ToString(),
-                Severity = MapSeverity(report.Severity),
-                Status = report.Status.ToString(),
-                Notes = report.Notes,
-                ReportDate = report.ObservedUtc.LocalDateTime,
-                Location = location,
-                ReportId = report.Id,
-                FieldName = _parcels.FirstOrDefault(p =>
-                    p.Geometry is not null &&
-                    GeometryEngine.Intersects(
-                        GeometryEngine.Project(p.Geometry, SpatialReferences.Wgs84),
-                        location))?.Name ?? "Unassigned"
-            };
-
-            _incidents.Add(incident);
-            DrawIncident(incident);
-        }
+            Outline = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, Color.White, 2)
+        };
 
         var graphic = new Graphic(inc.Location, symbol);
         _incidentOverlay.Graphics.Add(graphic);
         _incidentGraphics[graphic] = inc;
-        RunRiskAnalysis();
-
-        if (RecordsContainer.IsVisible)
-            ParcelCountLabel.Text = $"{_incidents.Count} Total";
     }
-
-
-
-	private void DrawIncident(Incident inc)
-	{
-		if (inc.Location is null) return;
-
-		var color = inc.Severity switch
-		{
-			"CRITICAL" => Color.FromArgb(255, 220, 38, 38),
-			"HIGH" => Color.FromArgb(255, 234, 88, 12),
-			"MEDIUM" => Color.FromArgb(255, 202, 138, 4),
-			_ => Color.FromArgb(255, 220, 38, 38)
-		};
-
-		var symbol = new SimpleMarkerSymbol(SimpleMarkerSymbolStyle.Circle, color, 22)
-		{
-			Outline = new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, Color.White, 2)
-		};
-
-		var graphic = new Graphic(inc.Location, symbol);
-		_incidentOverlay.Graphics.Add(graphic);
-		_incidentGraphics[graphic] = inc;
-
-		var glyph = new TextSymbol(
-			GlyphForType(inc.Classification, inc.PestName), Color.White, 13,
-			Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Center,
-			Esri.ArcGISRuntime.Symbology.VerticalAlignment.Middle);
-
-		_incidentOverlay.Graphics.Add(new Graphic(inc.Location, glyph));
-	}
-
-	private static string GlyphForType(string classification, string pestName)
-	{
-		var key = (string.IsNullOrWhiteSpace(classification) ? pestName : classification)
-			.ToLowerInvariant();
-
-		if (key.Contains("fung") || key.Contains("blight") || key.Contains("mold") || key.Contains("mildew") || key.Contains("rust") || key.Contains("rot"))
-			return "\U0001F344";
-		if (key.Contains("insect") || key.Contains("pest") || key.Contains("beetle") || key.Contains("aphid") || key.Contains("worm") || key.Contains("bug") || key.Contains("mite"))
-			return "\U0001F41B";
-		if (key.Contains("bacteri"))
-			return "\U0001F9EB";
-		if (key.Contains("vir"))
-			return "\U0001F9A0";
-		if (key.Contains("weed"))
-			return "\U0001F33F";
-		if (key.Contains("nutrient") || key.Contains("deficien"))
-			return "\U0001F9EA";
-		if (key.Contains("drought") || key.Contains("water") || key.Contains("stress"))
-			return "\U0001F4A7";
-
-		return "\u26A0";
-	}
-
-	// ---------- whole-farm threat area ----------
-
-	private void DrawThreatArea()
-	{
-		_areaThreatOverlay.Graphics.Clear();
-
-		var geometries = _parcels
-			.Where(pc => pc.Geometry is not null)
-			.Select(pc => pc.Geometry!)
-			.ToList();
-
-		if (geometries.Count == 0) return;
-
-		var union = GeometryEngine.Union(geometries);
-		if (union?.Extent is not Envelope extent) return;
-
-		var center = extent.GetCenter();
-
-		var projected = GeometryEngine.Project(extent, SpatialReferences.WebMercator) as Envelope ?? extent;
-		double diagonal = Math.Sqrt(
-			(projected.Width * projected.Width) + (projected.Height * projected.Height));
-		double radiusMeters = Math.Max(diagonal * 0.6, 500);
-
-		var projectedCenter = GeometryEngine.Project(center, SpatialReferences.WebMercator) as MapPoint ?? center;
-		var circle = GeometryEngine.BufferGeodetic(
-			projectedCenter, radiusMeters, LinearUnits.Meters, double.NaN,
-			GeodeticCurveType.Geodesic);
-
-		var fill = new SimpleFillSymbol(
-			SimpleFillSymbolStyle.Solid,
-			Color.FromArgb(28, 220, 38, 38),
-			new SimpleLineSymbol(SimpleLineSymbolStyle.Dash,
-								 Color.FromArgb(150, 220, 38, 38), 2));
-
-		_areaThreatOverlay.Graphics.Add(new Graphic(circle, fill));
-	}
 
     // ---------- spatial risk propagation ----------
 
     private void RunRiskAnalysis()
     {
+        _threatOverlay.Graphics.Clear();
         _riskOverlay.Graphics.Clear();
 
         var result = RiskEngine.Analyze(_incidents, _parcels);
+
+        if (result.ThreatZone is not null)
+        {
+            var zoneSymbol = new SimpleFillSymbol(
+                SimpleFillSymbolStyle.Solid,
+                Color.FromArgb(45, 245, 158, 11),
+                new SimpleLineSymbol(SimpleLineSymbolStyle.Dash,
+                                     Color.FromArgb(200, 245, 158, 11), 2));
+
+            _threatOverlay.Graphics.Add(new Graphic(result.ThreatZone, zoneSymbol));
+        }
 
         var riskSymbol = new SimpleFillSymbol(
             SimpleFillSymbolStyle.Solid,
@@ -1241,7 +934,7 @@ public partial class MainPage : ContentPage
         double exposed = result.AtRisk.Sum(r => r.Parcel.Acres);
         ThreatSummaryLabel.Text =
             $"{_incidents.Count} active incident(s). " +
-            $"{result.AtRisk.Count} neighboring field(s) within spread radius — " +
+            $"{result.AtRisk.Count} neighboring field(s) within spread radius ΓÇö " +
             $"{exposed:F1} acres exposed.";
 
         ThreatPanel.IsVisible = result.AtRisk.Count > 0 || result.Infected.Count > 0;
@@ -1315,7 +1008,7 @@ public partial class MainPage : ContentPage
             await mapView.SetViewpointCenterAsync(inc.Location, 12000);
 
         if (!string.IsNullOrWhiteSpace(inc.Treatment))
-            await DisplayAlertAsync($"{inc.PestName} — {inc.Severity}",
+            await DisplayAlertAsync($"{inc.PestName} ΓÇö {inc.Severity}",
                 $"{inc.Notes}\n\nRecommended action:\n{inc.Treatment}", "Close");
     }
 
@@ -1348,51 +1041,34 @@ public partial class MainPage : ContentPage
         }
 
         SummaryButton.IsEnabled = false;
-        AiSummaryLabel.Text = "Analyzing incident history…";
+        AiSummaryLabel.Text = "Analyzing incident historyΓÇª";
 
         AiSummaryLabel.Text = await PestClassifier.SummarizeAsync(_incidents);
 
         SummaryButton.IsEnabled = true;
     }
 
-    private void OnIncidentTapped(object? sender, TappedEventArgs e)
-    {
-        if (sender is Element { BindingContext: Incident incident })
-            incident.IsExpanded = !incident.IsExpanded;
-    }
+    // ---------- temporary AI test (delete before the demo) ----------
 
-    private async void OnRemoveIncidentClicked(object? sender, EventArgs e)
+    private async void OnTestAiClicked(object sender, EventArgs e)
     {
         CloseActionMenu();
         var photo = await FilePicker.Default.PickAsync(new PickOptions
-        if (sender is not Element { BindingContext: Incident incident }) return;
-        bool confirm = await DisplayAlertAsync("Remove record", $"Remove the \"{incident.PestName}\" report? This cannot be undone.", "Remove", "Cancel");
-        if (!confirm) return;
-        if (incident.ReportId != Guid.Empty) await _reportStore.DeleteReportAsync(incident.ReportId);
-        _incidents.Remove(incident);
-        var graphic = _incidentGraphics.FirstOrDefault(kvp => kvp.Value == incident).Key;
-        if (graphic is not null) { _incidentOverlay.Graphics.Remove(graphic); _incidentGraphics.Remove(graphic); }
-        RunRiskAnalysis();
-        if (RecordsContainer.IsVisible) ParcelCountLabel.Text = $"{_incidents.Count} Total";
-    }
-
-    private async void OnGenerateSummary(object sender, EventArgs e)
-    {
-        if (_incidents.Count == 0)
         {
-            AiSummaryLabel.Text = "No incidents logged yet.";
-            return;
-        }
+            FileTypes = FilePickerFileType.Images,
+            PickerTitle = "Select crop photo"
+        });
+        if (photo is null) return;
 
-        SummaryButton.IsEnabled = false;
-        AiSummaryLabel.Text = "Analyzing incident history…";
+        using var stream = await photo.OpenReadAsync();
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
 
-        AiSummaryLabel.Text = await PestClassifier.SummarizeAsync(_incidents);
+        var result = await PestClassifier.ClassifyAsync(ms.ToArray());
 
         await DisplayAlertAsync("Result",
-            result is null ? "Failed — check Output window"
-                           : $"{result.PestName}\n{result.Severity} • {result.Confidence}%\n\n{result.Notes}",
+            result is null ? "Failed ΓÇö check Output window"
+                           : $"{result.PestName}\n{result.Severity} ΓÇó {result.Confidence}%\n\n{result.Notes}",
             "OK");
-        SummaryButton.IsEnabled = true;
     }
 }
