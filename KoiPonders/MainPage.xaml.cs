@@ -59,6 +59,45 @@ public partial class MainPage : ContentPage
         IncidentList.ItemsSource = _incidents;
     }
 
+        SizeChanged += OnPageSizeChanged;
+    }
+
+    private void OnPageSizeChanged(object? sender, EventArgs e)
+    {
+        var usePhoneLayout = Width > 0 && Width < 700;
+
+        if (usePhoneLayout)
+        {
+            RootGrid.ColumnDefinitions = [new ColumnDefinition(GridLength.Star)];
+            RootGrid.RowDefinitions =
+            [
+                new RowDefinition(new GridLength(3, GridUnitType.Star)),
+                new RowDefinition(new GridLength(2, GridUnitType.Star))
+            ];
+            Microsoft.Maui.Controls.Grid.SetColumn(MapPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetRow(MapPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetColumn(ParcelPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetRow(ParcelPanel, 1);
+            MapPanel.Margin = new Thickness(8, 8, 8, 0);
+            ParcelPanel.Padding = new Thickness(12, 10);
+        }
+        else
+        {
+            RootGrid.ColumnDefinitions =
+            [
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(new GridLength(340))
+            ];
+            RootGrid.RowDefinitions = [new RowDefinition(GridLength.Star)];
+            Microsoft.Maui.Controls.Grid.SetColumn(MapPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetRow(MapPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetColumn(ParcelPanel, 1);
+            Microsoft.Maui.Controls.Grid.SetRow(ParcelPanel, 0);
+            MapPanel.Margin = new Thickness(16);
+            ParcelPanel.Padding = new Thickness(20, 24);
+        }
+    }
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
