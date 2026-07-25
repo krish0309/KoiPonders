@@ -11,6 +11,7 @@ public static class FarmStore
     private class ParcelDto
     {
         public string Name { get; set; } = "";
+        public string Crop { get; set; } = "";
         public double Acres { get; set; }
         public DateTime MappedDate { get; set; }
         public string GeometryJson { get; set; } = "";
@@ -48,6 +49,7 @@ public static class FarmStore
                     .Select(p => new ParcelDto
                     {
                         Name = p.Name,
+                        Crop = p.Crop,
                         Acres = p.Acres,
                         MappedDate = p.MappedDate,
                         GeometryJson = p.Geometry!.ToJson()
@@ -95,6 +97,7 @@ public static class FarmStore
                 parcels.Add(new Parcel
                 {
                     Name = p.Name,
+                    Crop = p.Crop,
                     Acres = p.Acres,
                     MappedDate = p.MappedDate,
                     Geometry = Geometry.FromJson(p.GeometryJson)
