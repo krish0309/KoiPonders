@@ -18,11 +18,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
-		<!-- Display name -->
-		<ApplicationTitle>KoiPonders</ApplicationTitle>
-
-		<!-- App Identifier -->
-		<ApplicationId>com.companyname.koiponders</ApplicationId>
+		<ApplicationTitle>FarmGuard</ApplicationTitle>
+		<ApplicationId>com.esri.farmguard</ApplicationId>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
