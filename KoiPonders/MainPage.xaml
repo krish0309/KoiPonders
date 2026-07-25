@@ -16,11 +16,17 @@
             <esri:MapView x:Name="mapView" Map="{Binding Map}" />
 
             <!-- drawing toolbar -->
-            <ScrollView Orientation="Horizontal"
+            <ScrollView x:Name="ToolbarScroll"
+                        Orientation="Horizontal"
                         Margin="12"
                         HorizontalOptions="Fill"
                         VerticalOptions="Start"
-                        HorizontalScrollBarVisibility="Never">
+                        ZIndex="10">
+                <ScrollView.HorizontalScrollBarVisibility>
+                    <OnPlatform x:TypeArguments="ScrollBarVisibility" Default="Never">
+                        <On Platform="WinUI" Value="Always" />
+                    </OnPlatform>
+                </ScrollView.HorizontalScrollBarVisibility>
                 <HorizontalStackLayout Spacing="8">
                 <Button x:Name="PolygonToolButton" Text="Polygon Tool"
                         Clicked="OnPolygonToolClicked"
@@ -60,7 +66,8 @@
             </Border>
 
             <!-- coordinate readout -->
-            <Border BackgroundColor="#CC132A20" Stroke="Transparent"
+            <Border x:Name="StatusPanel"
+                    BackgroundColor="#CC132A20" Stroke="Transparent"
                     Padding="12,6" Margin="12"
                     HorizontalOptions="Start" VerticalOptions="End">
                 <Border.StrokeShape>
