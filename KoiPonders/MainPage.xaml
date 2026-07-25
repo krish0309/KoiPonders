@@ -6,15 +6,22 @@
              x:Class="KoiPonders.MainPage"
              x:DataType="local:MapViewModel">
 
-    <Grid ColumnDefinitions="*,340" BackgroundColor="#E8F2FA">
+    <Grid x:Name="RootGrid"
+          ColumnDefinitions="*,340"
+          RowDefinitions="*"
+          BackgroundColor="#E8F2FA">
 
         <!-- ============ MAP ============ -->
-        <Grid Grid.Column="0" Margin="16">
+        <Grid x:Name="MapPanel" Grid.Column="0" Margin="16">
             <esri:MapView x:Name="mapView" Map="{Binding Map}" />
 
             <!-- drawing toolbar -->
-            <HorizontalStackLayout Spacing="8" Margin="12"
-                                   HorizontalOptions="Start" VerticalOptions="Start">
+            <ScrollView Orientation="Horizontal"
+                        Margin="12"
+                        HorizontalOptions="Fill"
+                        VerticalOptions="Start"
+                        HorizontalScrollBarVisibility="Never">
+                <HorizontalStackLayout Spacing="8">
                 <Button x:Name="PolygonToolButton" Text="Polygon Tool"
                         Clicked="OnPolygonToolClicked"
                         BackgroundColor="#15803D" TextColor="White"
@@ -37,7 +44,8 @@
                         Clicked="OnReportIncidentClicked"
                         BackgroundColor="#B91C1C" TextColor="White"
                         FontSize="13" Padding="14,0" HeightRequest="38" CornerRadius="6" />
-            </HorizontalStackLayout>
+                </HorizontalStackLayout>
+            </ScrollView>
 
             <!-- live acreage while drawing -->
             <Border x:Name="LiveAreaPanel" IsVisible="False"
@@ -114,6 +122,10 @@
 
         <!-- ============ RIGHT PANEL ============ -->
         <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto"
+        <!-- ============ PARCEL PANEL ============ -->
+        <Grid x:Name="ParcelPanel"
+              Grid.Column="1"
+              RowDefinitions="Auto,*,Auto"
               Padding="20,24" RowSpacing="14">
 
             <!-- tab switcher -->
