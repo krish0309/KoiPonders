@@ -1,4 +1,4 @@
-using Esri.ArcGISRuntime;
+﻿using Esri.ArcGISRuntime;
 using Esri.ArcGISRuntime.Http;
 using Esri.ArcGISRuntime.Security;
 using KoiPonders.Services;
@@ -64,6 +64,7 @@ namespace KoiPonders
             ArcGISRuntimeEnvironment.EnableTimestampOffsetSupport = true;
 
             // Services
+            builder.Services.AddSingleton(settings);
             builder.Services.AddSingleton<IFarmDataStore, JsonFarmDataStore>();
 
             // View models
@@ -81,6 +82,6 @@ namespace KoiPonders
             return builder.Build();
         }
 
-        private sealed record ArcGISSettings(string ArcGISApiKey);
+        internal sealed record ArcGISSettings(string ArcGISApiKey, string? PestClassifierApiKey = null);
     }
 }
