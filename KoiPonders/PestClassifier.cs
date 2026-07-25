@@ -25,16 +25,20 @@ public static class PestClassifier
 
     // ---------- offline path ----------
 
-    private static readonly (string cls, string pest, string sev, string crop, string note)[] Catalog =
+    private static readonly (string cls, string pest, string sev, string crop, string note, string treat)[] Catalog =
     {
         ("Pest Infestation", "Fall Armyworm", "HIGH", "Yellow Field Corn (Dent)",
-         "Ragged feeding damage in whorl leaves; scout adjacent rows and consider targeted treatment."),
+         "Ragged feeding damage in whorl leaves; scout adjacent rows and consider targeted treatment.",
+         "Apply a labelled insecticide to the whorl while larvae are small, targeting late afternoon. Re-scout in 5-7 days and treat neighbouring rows if damage advances."),
         ("Fungal Disease", "Common Rust", "MEDIUM", "Yellow Field Corn (Dent)",
-         "Reddish-brown pustules on leaf surfaces; monitor humidity and canopy density."),
+         "Reddish-brown pustules on leaf surfaces; monitor humidity and canopy density.",
+         "Apply a foliar fungicide if pustules reach the upper canopy before tasseling. Improve airflow by avoiding excess nitrogen and over-dense planting next season."),
         ("Crop Blight", "Northern Corn Leaf Blight", "CRITICAL", "Yellow Field Corn (Dent)",
-         "Cigar-shaped grey-green lesions spreading upward; act quickly to limit yield loss."),
+         "Cigar-shaped grey-green lesions spreading upward; act quickly to limit yield loss.",
+         "Apply a fungicide immediately — lesions above the ear leaf before silking cause serious yield loss. Plan crop rotation and a resistant hybrid for this block next season."),
         ("Pest Infestation", "Soybean Aphid", "MEDIUM", "Soybean",
-         "Colonies on undersides of upper leaves; check for natural predator presence before spraying."),
+         "Colonies on undersides of upper leaves; check for natural predator presence before spraying.",
+         "Only treat if counts exceed roughly 250 aphids per plant and are rising. Check for lady beetles first — natural predators often collapse the colony without any spray."),
     };
 
     private static async Task<Incident?> StubClassifyAsync(byte[] imageBytes)
@@ -53,11 +57,12 @@ public static class PestClassifier
             Severity = c.sev,
             AffectedCrop = c.crop,
             Notes = c.note,
+            Treatment = c.treat,
             Confidence = 82 + (idx * 4)
         };
     }
 
-    // ---------- live path ----------
+    // ---------- live path: photo ----------
 
     private static async Task<Incident?> LiveClassifyAsync(byte[] imageBytes)
     {
@@ -92,7 +97,8 @@ public static class PestClassifier
                                 "severity: one of \"LOW\", \"MEDIUM\", \"HIGH\", \"CRITICAL\"\n" +
                                 "affectedCrop: crop species if identifiable\n" +
                                 "confidence: integer 0-100\n" +
-                                "notes: one sentence on visible symptoms and recommended action"
+                                "notes: one sentence on visible symptoms\n" +
+                                "treatment: two sentences on how to treat and contain this specific problem"
                             },
                             new
                             {
@@ -104,47 +110,116 @@ public static class PestClassifier
                 }
             };
 
-            var req = new HttpRequestMessage(HttpMethod.Post, ChatUrl);
-            req.Headers.Add(KeyHeader, ApiKey);
-            req.Content = new StringContent(
-                JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-
-            var resp = await Http.SendAsync(req);
-            var body = await resp.Content.ReadAsStringAsync();
-
-            if (!resp.IsSuccessStatusCode)
-            {
-                System.Diagnostics.Debug.WriteLine($"[PestClassifier] {resp.StatusCode}: {body}");
-                return null;
-            }
-
-            using var doc = JsonDocument.Parse(body);
-            var text = doc.RootElement
-                .GetProperty("choices")[0]
-                .GetProperty("message")
-                .GetProperty("content").GetString() ?? "";
-
-            text = text.Replace("```json", "").Replace("```", "").Trim();
-
-            using var result = JsonDocument.Parse(text);
-            var r = result.RootElement;
-
-            return new Incident
-            {
-                Classification = Get(r, "classification", "Unknown"),
-                PestName = Get(r, "pestName", "Unidentified"),
-                Severity = Get(r, "severity", "MEDIUM").ToUpperInvariant(),
-                AffectedCrop = Get(r, "affectedCrop", "Unknown"),
-                Notes = Get(r, "notes", ""),
-                Confidence = r.TryGetProperty("confidence", out var c)
-                                   && c.TryGetInt32(out var ci) ? ci : 0
-            };
+            return await SendAndParseAsync(payload, "PestClassifier");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PestClassifier] {ex.Message}");
             return null;
         }
+    }
+
+    // ---------- live path: plain-language description ----------
+
+    public static async Task<Incident?> ClassifyTextAsync(string description)
+    {
+        if (UseStub)
+        {
+            await Task.Delay(1200);
+            var c = Catalog[Math.Abs(description.Length) % Catalog.Length];
+            return new Incident
+            {
+                Classification = c.cls,
+                PestName = c.pest,
+                Severity = c.sev,
+                AffectedCrop = c.crop,
+                Notes = c.note,
+                Treatment = c.treat,
+                Confidence = 74
+            };
+        }
+
+        try
+        {
+            var payload = new
+            {
+                max_tokens = 1000,
+                temperature = 0.2,
+                response_format = new { type = "json_object" },
+                messages = new object[]
+                {
+                    new
+                    {
+                        role = "system",
+                        content = "You are an agronomy diagnostic assistant. You always respond with a single JSON object and nothing else."
+                    },
+                    new
+                    {
+                        role = "user",
+                        content =
+                            "A farmer describes a problem in their field. Identify the likely cause.\n\n" +
+                            "Farmer's description: \"" + description + "\"\n\n" +
+                            "Return JSON with exactly these keys:\n" +
+                            "classification: one of \"Pest Infestation\", \"Crop Blight\", \"Fungal Disease\", \"Bacterial Infection\", \"Healthy\"\n" +
+                            "pestName: most likely organism or disease name\n" +
+                            "severity: one of \"LOW\", \"MEDIUM\", \"HIGH\", \"CRITICAL\"\n" +
+                            "affectedCrop: crop species if mentioned or inferable, otherwise \"Unknown\"\n" +
+                            "confidence: integer 0-100, lower for a vague description\n" +
+                            "notes: one sentence restating the symptoms in agronomic terms\n" +
+                            "treatment: two sentences on how to treat and contain this specific problem"
+                    }
+                }
+            };
+
+            return await SendAndParseAsync(payload, "ClassifyText");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ClassifyText] {ex.Message}");
+            return null;
+        }
+    }
+
+    // ---------- shared request/parse ----------
+
+    private static async Task<Incident?> SendAndParseAsync(object payload, string tag)
+    {
+        var req = new HttpRequestMessage(HttpMethod.Post, ChatUrl);
+        req.Headers.Add(KeyHeader, ApiKey);
+        req.Content = new StringContent(
+            JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+        var resp = await Http.SendAsync(req);
+        var body = await resp.Content.ReadAsStringAsync();
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            System.Diagnostics.Debug.WriteLine($"[{tag}] {resp.StatusCode}: {body}");
+            return null;
+        }
+
+        using var doc = JsonDocument.Parse(body);
+        var text = doc.RootElement
+            .GetProperty("choices")[0]
+            .GetProperty("message")
+            .GetProperty("content").GetString() ?? "";
+
+        text = text.Replace("```json", "").Replace("```", "").Trim();
+
+        using var result = JsonDocument.Parse(text);
+        var r = result.RootElement;
+
+        return new Incident
+        {
+            Classification = Get(r, "classification", "Unknown"),
+            PestName = Get(r, "pestName", "Unidentified"),
+            Severity = Get(r, "severity", "MEDIUM").ToUpperInvariant(),
+            AffectedCrop = Get(r, "affectedCrop", "Unknown"),
+            Notes = Get(r, "notes", ""),
+            Treatment = Get(r, "treatment", ""),
+            Confidence = r.TryGetProperty("confidence", out var c)
+                               && c.TryGetInt32(out var ci) ? ci : 0
+        };
     }
 
     // ---------- dashboard summary ----------

@@ -63,5 +63,11 @@
 	<ItemGroup>
 		<EmbeddedResource Include="ArcGISSettings.local.json" Condition="Exists('ArcGISSettings.local.json')" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Update="IncidentReportPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
 	
 </Project>
