@@ -4,7 +4,6 @@ using Esri.ArcGISRuntime.UI;
 using Esri.ArcGISRuntime.UI.Editing;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Globalization;
 using KoiPonders.Models;
 using KoiPonders.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,7 +45,8 @@ public partial class MainPage : ContentPage
         _viewModel = new MapViewModel();
         BindingContext = _viewModel;
 
-        _reportStore = MauiProgram.Services.GetRequiredService<IReportStore>();
+        // Optional — the reporting feature may not be registered.
+        _reportStore = MauiProgram.Services?.GetService<IReportStore>();
 
         mapView.GraphicsOverlays ??= new GraphicsOverlayCollection();
         mapView.GraphicsOverlays.Add(_parcelOverlay);
@@ -63,6 +63,8 @@ public partial class MainPage : ContentPage
         IncidentList.ItemsSource = _incidents;
         SizeChanged += OnPageSizeChanged;
     }
+
+    // ---------- responsive layout ----------
 
     private void OnPageSizeChanged(object? sender, EventArgs e)
     {
@@ -125,6 +127,8 @@ public partial class MainPage : ContentPage
         }
     }
 
+    // ---------- startup ----------
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -137,13 +141,14 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = "Farm imagery failed to load";
-            await DisplayAlertAsync("Imagery unavailable", ex.Message, "OK");
+            StatusLabel.Text = "WGS84 • EPSG:3857";
+            System.Diagnostics.Debug.WriteLine($"[Imagery] {ex.Message}");
         }
 
         if (!_loaded)
         {
             _loaded = true;
+
             var (parcels, _) = await FarmStore.LoadAsync();
 
             foreach (var parcel in parcels)
@@ -173,8 +178,73 @@ public partial class MainPage : ContentPage
                 await mapView.SetViewpointGeometryAsync(geometry, 120);
         }
 
-        await ReloadReportsAsync();
+        await LoadIncidentsAsync();
     }
+
+    /// <summary>
+    /// Rebuilds pins and risk analysis from BOTH sources: incidents saved by the
+    /// AI report flow, and reports saved by the form-based report store.
+    /// </summary>
+    private async Task LoadIncidentsAsync()
+    {
+        _incidents.Clear();
+        _incidentOverlay.Graphics.Clear();
+
+        var (_, saved) = await FarmStore.LoadAsync();
+        foreach (var inc in saved)
+        {
+            _incidents.Add(inc);
+            DrawIncident(inc);
+        }
+
+        if (_reportStore is not null)
+        {
+            var reports = await _reportStore.GetReportsAsync();
+
+            foreach (var report in reports)
+            {
+                if (!report.HasLocation) continue;
+
+                var location = new MapPoint(
+                    report.Longitude!.Value, report.Latitude!.Value, SpatialReferences.Wgs84);
+
+                var incident = new Incident
+                {
+                    PestName = report.ProblemName,
+                    Classification = report.Category.ToString(),
+                    Severity = MapSeverity(report.Severity),
+                    Status = report.Status.ToString(),
+                    Notes = report.Notes,
+                    ReportDate = report.ObservedUtc.LocalDateTime,
+                    Location = location,
+                    FieldName = FieldNameAt(location)
+                };
+
+                _incidents.Add(incident);
+                DrawIncident(incident);
+            }
+        }
+
+        RunRiskAnalysis();
+
+        if (RecordsContainer.IsVisible)
+            ParcelCountLabel.Text = $"{_incidents.Count} Total";
+    }
+
+    private static string MapSeverity(Models.Severity severity) => severity switch
+    {
+        Models.Severity.Critical => "CRITICAL",
+        Models.Severity.High => "HIGH",
+        Models.Severity.Moderate => "MEDIUM",
+        _ => "LOW"
+    };
+
+    private string FieldNameAt(MapPoint location) =>
+        _parcels.FirstOrDefault(p =>
+            p.Geometry is not null &&
+            GeometryEngine.Intersects(
+                GeometryEngine.Project(p.Geometry, location.SpatialReference),
+                location))?.Name ?? "Unassigned";
 
     // ---------- tools ----------
 
@@ -403,46 +473,20 @@ public partial class MainPage : ContentPage
         _incidentOverlay.Graphics.Clear();
         _incidentGraphics.Clear();
 
-        foreach (var report in reports)
-        {
-            if (!report.HasLocation) continue;
+        var incident = await page.Result;
+        if (incident is null) return;
 
-            var location = new MapPoint(
-                report.Longitude!.Value, report.Latitude!.Value, SpatialReferences.Wgs84);
+        incident.FieldName = FieldNameAt(e.Location);
 
-            var incident = new Incident
-            {
-                PestName = report.ProblemName,
-                Classification = report.Category.ToString(),
-                Severity = MapSeverity(report.Severity),
-                Status = report.Status.ToString(),
-                Notes = report.Notes,
-                ReportDate = report.ObservedUtc.LocalDateTime,
-                Location = location,
-                FieldName = _parcels.FirstOrDefault(p =>
-                    p.Geometry is not null &&
-                    GeometryEngine.Intersects(
-                        GeometryEngine.Project(p.Geometry, SpatialReferences.Wgs84),
-                        location))?.Name ?? "Unassigned"
-            };
-
-            _incidents.Add(incident);
-            DrawIncident(incident);
-        }
-
+        _incidents.Add(incident);
+        DrawIncident(incident);
         RunRiskAnalysis();
 
         if (RecordsContainer.IsVisible)
             ParcelCountLabel.Text = $"{_incidents.Count} Total";
-    }
 
-    private static string MapSeverity(Models.Severity severity) => severity switch
-    {
-        Models.Severity.Critical => "CRITICAL",
-        Models.Severity.High => "HIGH",
-        Models.Severity.Moderate => "MEDIUM",
-        _ => "LOW"
-    };
+        await FarmStore.SaveAsync(_parcels, _incidents);
+    }
 
     private void DrawIncident(Incident inc)
     {
@@ -516,11 +560,12 @@ public partial class MainPage : ContentPage
 
     private async void OnClearIncidents(object sender, EventArgs e)
     {
-        // Clear both the in-memory pins and the persisted reports so the cleared state
-        // is not repopulated the next time the page reloads reports.
-        var reports = await _reportStore.GetReportsAsync();
-        foreach (var report in reports)
-            await _reportStore.DeleteReportAsync(report.Id);
+        if (_reportStore is not null)
+        {
+            var reports = await _reportStore.GetReportsAsync();
+            foreach (var report in reports)
+                await _reportStore.DeleteReportAsync(report.Id);
+        }
 
         _incidents.Clear();
         _incidentOverlay.Graphics.Clear();
@@ -568,8 +613,14 @@ public partial class MainPage : ContentPage
 
     private async void OnIncidentSelected(object sender, SelectionChangedEventArgs e)
     {
-        if (e.CurrentSelection.FirstOrDefault() is Incident inc && inc.Location is not null)
+        if (e.CurrentSelection.FirstOrDefault() is not Incident inc) return;
+
+        if (inc.Location is not null)
             await mapView.SetViewpointCenterAsync(inc.Location, 12000);
+
+        if (!string.IsNullOrWhiteSpace(inc.Treatment))
+            await DisplayAlertAsync($"{inc.PestName} — {inc.Severity}",
+                $"{inc.Notes}\n\nRecommended action:\n{inc.Treatment}", "Close");
     }
 
     private async void OnGenerateSummary(object sender, EventArgs e)
