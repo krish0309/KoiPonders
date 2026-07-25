@@ -43,7 +43,8 @@ namespace KoiPonders
 
             var imageryLayer = new RasterLayer(new Raster(localPath))
             {
-                Name = "NH GRANIT 2021–2022 Six-Inch Orthophotos"
+                InitialViewpoint = new Viewpoint(37.6420, -100.8790, 40000)
+
             };
             Map.OperationalLayers.Add(imageryLayer);
             await imageryLayer.LoadAsync();
