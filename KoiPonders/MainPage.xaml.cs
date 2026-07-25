@@ -57,8 +57,6 @@ public partial class MainPage : ContentPage
 
         ParcelList.ItemsSource = _parcels;
         IncidentList.ItemsSource = _incidents;
-    }
-
         SizeChanged += OnPageSizeChanged;
     }
 
@@ -113,6 +111,38 @@ public partial class MainPage : ContentPage
             StatusLabel.Text = "Farm imagery failed to load";
             await DisplayAlertAsync("Imagery unavailable", ex.Message, "OK");
         }
+
+        if (!_loaded)
+        {
+            _loaded = true;
+            var (parcels, _) = await FarmStore.LoadAsync();
+
+            foreach (var parcel in parcels)
+            {
+                _parcels.Add(parcel);
+                if (parcel.Geometry is null) continue;
+
+                _parcelOverlay.Graphics.Add(new Graphic(parcel.Geometry, _parcelSymbol));
+
+                var label = new TextSymbol(
+                    $"{parcel.Name}  {parcel.Acres:F1} Ac", Color.White, 11,
+                    Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Center,
+                    Esri.ArcGISRuntime.Symbology.VerticalAlignment.Middle)
+                {
+                    HaloColor = Color.FromArgb(190, 10, 30, 20),
+                    HaloWidth = 2
+                };
+                if (parcel.Geometry.Extent is { } extent)
+                    _parcelOverlay.Graphics.Add(new Graphic(extent.GetCenter(), label));
+            }
+
+            ParcelCountLabel.Text = $"{_parcels.Count} Total";
+
+            if (_parcels.FirstOrDefault()?.Geometry is { } geometry)
+                await mapView.SetViewpointGeometryAsync(geometry, 120);
+        }
+
+        await ReloadReportsAsync();
     }
 
     // ---------- tools ----------
@@ -289,7 +319,7 @@ public partial class MainPage : ContentPage
                 FieldName = _parcels.FirstOrDefault(p =>
                     p.Geometry is not null &&
                     GeometryEngine.Intersects(
-                        GeometryEngine.Project(p.Geometry, location.SpatialReference),
+                        GeometryEngine.Project(p.Geometry, SpatialReferences.Wgs84),
                         location))?.Name ?? "Unassigned"
             };
 
@@ -301,11 +331,6 @@ public partial class MainPage : ContentPage
 
         if (RecordsContainer.IsVisible)
             ParcelCountLabel.Text = $"{_incidents.Count} Total";
-        await FarmStore.SaveAsync(_parcels, _incidents);
-
-        await DisplayAlert(incident.PestName,
-            $"{incident.Classification} · {incident.Severity} · {incident.Confidence}% confidence\n" +
-            $"Field: {incident.FieldName}\n\n{incident.Notes}", "OK");
     }
 
     private static string MapSeverity(Models.Severity severity) => severity switch
@@ -478,45 +503,5 @@ public partial class MainPage : ContentPage
             result is null ? "Failed — check Output window"
                            : $"{result.PestName}\n{result.Severity} · {result.Confidence}%\n\n{result.Notes}",
             "OK");
-    }
-    protected override async void OnAppearing()
-    {
-        base.OnAppearing();
-        if (_loaded) return;
-        _loaded = true;
-
-        var (parcels, incidents) = await FarmStore.LoadAsync();
-
-        foreach (var p in parcels)
-        {
-            _parcels.Add(p);
-            if (p.Geometry is not null)
-            {
-                _parcelOverlay.Graphics.Add(new Graphic(p.Geometry, _parcelSymbol));
-
-                var lbl = new TextSymbol(
-                    $"{p.Name}  {p.Acres:F1} Ac", Color.White, 11,
-                    Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Center,
-                    Esri.ArcGISRuntime.Symbology.VerticalAlignment.Middle)
-                {
-                    HaloColor = Color.FromArgb(190, 10, 30, 20),
-                    HaloWidth = 2
-                };
-                _parcelOverlay.Graphics.Add(new Graphic(p.Geometry.Extent.GetCenter(), lbl));
-            }
-        }
-
-        foreach (var i in incidents)
-        {
-            _incidents.Add(i);
-            DrawIncident(i);
-        }
-
-        ParcelCountLabel.Text = $"{_parcels.Count} Total";
-
-        if (_incidents.Count > 0) RunRiskAnalysis();
-
-        if (_parcels.Count > 0 && _parcels[0].Geometry is not null)
-            await mapView.SetViewpointGeometryAsync(_parcels[0].Geometry!, 120);
     }
 }
