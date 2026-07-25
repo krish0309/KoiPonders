@@ -5,6 +5,7 @@ using Esri.ArcGISRuntime.UI.Editing;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Color = System.Drawing.Color;
+using MauiColor = Microsoft.Maui.Graphics.Color;
 
 namespace KoiPonders;
 
@@ -21,6 +22,7 @@ public partial class MainPage : ContentPage
     private readonly ObservableCollection<Incident> _incidents = new();
 
     private bool _awaitingIncidentTap;
+    private bool _loaded;
 
     private readonly SimpleFillSymbol _parcelSymbol = new(
         SimpleFillSymbolStyle.Solid,
@@ -46,6 +48,7 @@ public partial class MainPage : ContentPage
         _geometryEditor.PropertyChanged += OnEditorPropertyChanged;
 
         ParcelList.ItemsSource = _parcels;
+        IncidentList.ItemsSource = _incidents;
     }
 
     protected override async void OnAppearing()
@@ -167,6 +170,7 @@ public partial class MainPage : ContentPage
 
         // Boundaries changed — recompute exposure.
         if (_incidents.Count > 0) RunRiskAnalysis();
+        await FarmStore.SaveAsync(_parcels, _incidents);
     }
 
     // ---------- zoom to parcel ----------
@@ -229,6 +233,10 @@ public partial class MainPage : ContentPage
         _incidents.Add(incident);
         DrawIncident(incident);
         RunRiskAnalysis();
+
+        if (RecordsContainer.IsVisible)
+            ParcelCountLabel.Text = $"{_incidents.Count} Total";
+        await FarmStore.SaveAsync(_parcels, _incidents);
 
         await DisplayAlert(incident.PestName,
             $"{incident.Classification} · {incident.Severity} · {incident.Confidence}% confidence\n" +
@@ -303,7 +311,7 @@ public partial class MainPage : ContentPage
         ThreatPanel.IsVisible = false;
     }
 
-    private void OnClearIncidents(object sender, EventArgs e)
+    private async void OnClearIncidents(object sender, EventArgs e)
     {
         _incidents.Clear();
         _incidentOverlay.Graphics.Clear();
@@ -311,6 +319,63 @@ public partial class MainPage : ContentPage
         _riskOverlay.Graphics.Clear();
         RiskList.ItemsSource = null;
         ThreatPanel.IsVisible = false;
+
+        if (RecordsContainer.IsVisible)
+            ParcelCountLabel.Text = "0 Total";
+
+        await FarmStore.SaveAsync(_parcels, _incidents);
+    }
+
+    // ---------- panel tabs ----------
+
+    private void OnShowParcels(object sender, EventArgs e)
+    {
+        ParcelList.IsVisible = true;
+        RecordsContainer.IsVisible = false;
+        PanelTitleLabel.Text = "Mapped Parcels";
+        ParcelCountLabel.Text = $"{_parcels.Count} Total";
+        AddBoundaryButton.IsVisible = true;
+
+        ParcelsTabButton.BackgroundColor = MauiColor.FromArgb("#15803D");
+        ParcelsTabButton.TextColor = Colors.White;
+        RecordsTabButton.BackgroundColor = MauiColor.FromArgb("#DDE8F0");
+        RecordsTabButton.TextColor = MauiColor.FromArgb("#5A6E77");
+    }
+
+    private void OnShowRecords(object sender, EventArgs e)
+    {
+        ParcelList.IsVisible = false;
+        RecordsContainer.IsVisible = true;
+        PanelTitleLabel.Text = "Records & Log";
+        ParcelCountLabel.Text = $"{_incidents.Count} Total";
+        AddBoundaryButton.IsVisible = false;
+
+        RecordsTabButton.BackgroundColor = MauiColor.FromArgb("#15803D");
+        RecordsTabButton.TextColor = Colors.White;
+        ParcelsTabButton.BackgroundColor = MauiColor.FromArgb("#DDE8F0");
+        ParcelsTabButton.TextColor = MauiColor.FromArgb("#5A6E77");
+    }
+
+    private async void OnIncidentSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.CurrentSelection.FirstOrDefault() is Incident inc && inc.Location is not null)
+            await mapView.SetViewpointCenterAsync(inc.Location, 12000);
+    }
+
+    private async void OnGenerateSummary(object sender, EventArgs e)
+    {
+        if (_incidents.Count == 0)
+        {
+            AiSummaryLabel.Text = "No incidents logged yet.";
+            return;
+        }
+
+        SummaryButton.IsEnabled = false;
+        AiSummaryLabel.Text = "Analyzing incident history…";
+
+        AiSummaryLabel.Text = await PestClassifier.SummarizeAsync(_incidents);
+
+        SummaryButton.IsEnabled = true;
     }
 
     // ---------- temporary AI test (delete before the demo) ----------
@@ -334,5 +399,45 @@ public partial class MainPage : ContentPage
             result is null ? "Failed — check Output window"
                            : $"{result.PestName}\n{result.Severity} · {result.Confidence}%\n\n{result.Notes}",
             "OK");
+    }
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (_loaded) return;
+        _loaded = true;
+
+        var (parcels, incidents) = await FarmStore.LoadAsync();
+
+        foreach (var p in parcels)
+        {
+            _parcels.Add(p);
+            if (p.Geometry is not null)
+            {
+                _parcelOverlay.Graphics.Add(new Graphic(p.Geometry, _parcelSymbol));
+
+                var lbl = new TextSymbol(
+                    $"{p.Name}  {p.Acres:F1} Ac", Color.White, 11,
+                    Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Center,
+                    Esri.ArcGISRuntime.Symbology.VerticalAlignment.Middle)
+                {
+                    HaloColor = Color.FromArgb(190, 10, 30, 20),
+                    HaloWidth = 2
+                };
+                _parcelOverlay.Graphics.Add(new Graphic(p.Geometry.Extent.GetCenter(), lbl));
+            }
+        }
+
+        foreach (var i in incidents)
+        {
+            _incidents.Add(i);
+            DrawIncident(i);
+        }
+
+        ParcelCountLabel.Text = $"{_parcels.Count} Total";
+
+        if (_incidents.Count > 0) RunRiskAnalysis();
+
+        if (_parcels.Count > 0 && _parcels[0].Geometry is not null)
+            await mapView.SetViewpointGeometryAsync(_parcels[0].Geometry!, 120);
     }
 }
