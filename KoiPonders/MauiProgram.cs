@@ -1,6 +1,7 @@
 using Esri.ArcGISRuntime;
 using Esri.ArcGISRuntime.Http;
 using Esri.ArcGISRuntime.Security;
+using System.Text.Json;
 
 namespace KoiPonders
 {
@@ -25,6 +26,19 @@ namespace KoiPonders
              * or retrieve a license dynamically after signing into a portal:
              * ArcGISRuntimeEnvironment.SetLicense(await myArcGISPortal.GetLicenseInfoAsync()); */
 
+            var assembly = typeof(MauiProgram).Assembly;
+            using var stream = assembly.GetManifestResourceStream("KoiPonders.ArcGISSettings.local.json")
+                ?? assembly.GetManifestResourceStream("KoiPonders.ArcGISSettings.json")
+                ?? throw new InvalidOperationException("ArcGIS settings were not found.");
+            var settings = JsonSerializer.Deserialize<ArcGISSettings>(stream)
+                ?? throw new InvalidOperationException("ArcGIS settings are invalid.");
+
+            if (string.IsNullOrWhiteSpace(settings.ArcGISApiKey))
+            {
+                throw new InvalidOperationException(
+                    "Copy ArcGISSettings.json to ArcGISSettings.local.json and add your ArcGIS API key.");
+            }
+
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
@@ -34,8 +48,7 @@ namespace KoiPonders
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 })
                 .UseArcGISRuntime(config => config
-                // .UseLicense("[Your ArcGIS Maps SDK license string]")
-                // .UseApiKey("[Your ArcGIS location services API key]")
+                   .UseApiKey(settings.ArcGISApiKey)
                    .ConfigureAuthentication(auth => auth
                        .UseDefaultChallengeHandler() // Use the default authentication dialog
                        .UseCredentialPersistence()
@@ -49,5 +62,7 @@ namespace KoiPonders
 
             return builder.Build();
         }
+
+        private sealed record ArcGISSettings(string ArcGISApiKey);
     }
 }

@@ -16,8 +16,7 @@ namespace KoiPonders
             _map = new Map(SpatialReferences.WebMercator)
             {
                 InitialViewpoint = new Viewpoint(new Envelope(-180, -85, 180, 85, SpatialReferences.Wgs84)),
-#warning To use ArcGIS location services (including basemaps) specify your API Key access token or require the user to sign in using a valid ArcGIS account.
-                //Basemap = new Basemap(BasemapStyle.ArcGISStreets)
+                Basemap = new Basemap(BasemapStyle.ArcGISStreets)
             };
         }
 
