@@ -1,0 +1,8 @@
+Farm: 124 Beech Hill Rd, Hopkinton, NH 03229
+Center latitude: 43.2033888
+Center longitude: -71.6331474
+Scale: 1:1752
+Bounds west: -71.6355143
+Bounds south: 43.2027732
+Bounds east: -71.6307804
+Bounds north: 43.2040044
