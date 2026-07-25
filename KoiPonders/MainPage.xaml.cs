@@ -64,6 +64,31 @@ public partial class MainPage : ContentPage
     {
         var usePhoneLayout = Width > 0 && Width < 700;
 
+        if (DeviceInfo.Platform == DevicePlatform.WinUI)
+        {
+            MapPanel.RowDefinitions =
+            [
+                new RowDefinition(GridLength.Auto),
+                new RowDefinition(GridLength.Star)
+            ];
+            Microsoft.Maui.Controls.Grid.SetRow(ToolbarScroll, 0);
+            Microsoft.Maui.Controls.Grid.SetRow(mapView, 1);
+            Microsoft.Maui.Controls.Grid.SetRow(LiveAreaPanel, 1);
+            Microsoft.Maui.Controls.Grid.SetRow(StatusPanel, 1);
+            Microsoft.Maui.Controls.Grid.SetRow(ThreatPanel, 1);
+            ToolbarScroll.Margin = new Thickness(0, 0, 0, 8);
+        }
+        else
+        {
+            MapPanel.RowDefinitions = [new RowDefinition(GridLength.Star)];
+            Microsoft.Maui.Controls.Grid.SetRow(ToolbarScroll, 0);
+            Microsoft.Maui.Controls.Grid.SetRow(mapView, 0);
+            Microsoft.Maui.Controls.Grid.SetRow(LiveAreaPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetRow(StatusPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetRow(ThreatPanel, 0);
+            ToolbarScroll.Margin = new Thickness(12);
+        }
+
         if (usePhoneLayout)
         {
             RootGrid.ColumnDefinitions = [new ColumnDefinition(GridLength.Star)];
