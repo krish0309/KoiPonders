@@ -33,6 +33,8 @@ namespace KoiPonders
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    fonts.AddFont("SpaceGrotesk-Variable.ttf", "SpaceGrotesk");
+                    fonts.AddFont("DMSans-Variable.ttf", "DMSans");
                 })
                 .UseArcGISRuntime(config => config
                    .UseApiKey(settings.ArcGISApiKey)

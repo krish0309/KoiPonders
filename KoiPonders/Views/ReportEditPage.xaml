@@ -10,26 +10,26 @@
 	<ScrollView>
 		<VerticalStackLayout Padding="16" Spacing="12">
 
-			<Label Text="{Binding LocationText}" FontSize="14" TextColor="#2E7D32" FontAttributes="Bold" />
+			<Label Text="{Binding LocationText}" FontSize="14" TextColor="#2E7D32" FontAttributes="Bold" FontFamily="SpaceGrotesk" />
 
-			<Label Text="Problem" FontAttributes="Bold" />
+			<Label Text="Problem" FontAttributes="Bold" FontFamily="SpaceGrotesk" />
 			<Entry Placeholder="e.g. Aphids, Powdery mildew" Text="{Binding ProblemName}" />
 
-			<Label Text="Category" FontAttributes="Bold" />
+			<Label Text="Category" FontAttributes="Bold" FontFamily="SpaceGrotesk" />
 			<Picker ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}" />
 
 			<Grid ColumnDefinitions="*,*" ColumnSpacing="12">
 				<VerticalStackLayout Grid.Column="0" Spacing="4">
-					<Label Text="Severity" FontAttributes="Bold" />
+					<Label Text="Severity" FontAttributes="Bold" FontFamily="SpaceGrotesk" />
 					<Picker ItemsSource="{Binding Severities}" SelectedItem="{Binding Severity}" />
 				</VerticalStackLayout>
 				<VerticalStackLayout Grid.Column="1" Spacing="4">
-					<Label Text="Status" FontAttributes="Bold" />
+					<Label Text="Status" FontAttributes="Bold" FontFamily="SpaceGrotesk" />
 					<Picker ItemsSource="{Binding Statuses}" SelectedItem="{Binding Status}" />
 				</VerticalStackLayout>
 			</Grid>
 
-			<Label FontAttributes="Bold">
+			<Label FontAttributes="Bold" FontFamily="SpaceGrotesk">
 				<Label.Text>
 					<MultiBinding StringFormat="{}Affected area: {0:0}%">
 						<Binding Path="AffectedAreaPercent" />
@@ -40,23 +40,23 @@
 
 			<Grid ColumnDefinitions="*,*" ColumnSpacing="12">
 				<VerticalStackLayout Grid.Column="0" Spacing="4">
-					<Label Text="Observed" FontAttributes="Bold" />
+					<Label Text="Observed" FontAttributes="Bold" FontFamily="SpaceGrotesk" />
 					<DatePicker Date="{Binding ObservedDate}" />
 				</VerticalStackLayout>
 				<VerticalStackLayout Grid.Column="1" Spacing="4">
-					<Label Text="Follow-up" FontAttributes="Bold" />
+					<Label Text="Follow-up" FontAttributes="Bold" FontFamily="SpaceGrotesk" />
 					<DatePicker Date="{Binding FollowUpDate}" />
 				</VerticalStackLayout>
 			</Grid>
 
-			<Label Text="Notes" FontAttributes="Bold" />
+			<Label Text="Notes" FontAttributes="Bold" FontFamily="SpaceGrotesk" />
 			<Editor Placeholder="Observations, spread, conditions…"
 					HeightRequest="90"
 					Text="{Binding Notes}" />
 
 			<!-- Photos -->
 			<Grid ColumnDefinitions="*,Auto">
-				<Label Text="Photos" FontAttributes="Bold" VerticalOptions="Center" />
+				<Label Text="Photos" FontAttributes="Bold" FontFamily="SpaceGrotesk" VerticalOptions="Center" />
 				<Button Grid.Column="1" Text="Add photo" Padding="10,4" FontSize="13"
 						Command="{Binding AddPhotoCommand}" />
 			</Grid>
@@ -80,7 +80,7 @@
 
 			<!-- Treatments -->
 			<Grid ColumnDefinitions="*,Auto">
-				<Label Text="Treatment actions" FontAttributes="Bold" VerticalOptions="Center" />
+				<Label Text="Treatment actions" FontAttributes="Bold" FontFamily="SpaceGrotesk" VerticalOptions="Center" />
 				<Button Grid.Column="1" Text="Add action" Padding="10,4" FontSize="13"
 						Command="{Binding AddTreatmentCommand}" />
 			</Grid>
@@ -91,7 +91,7 @@
 								Stroke="#DDDDDD">
 							<Grid ColumnDefinitions="*,Auto">
 								<VerticalStackLayout Grid.Column="0" Spacing="2">
-									<Label Text="{Binding Action}" FontAttributes="Bold" />
+									<Label Text="{Binding Action}" FontAttributes="Bold" FontFamily="SpaceGrotesk" />
 									<Label Text="{Binding Product}" TextColor="Gray" FontSize="13" />
 									<Label Text="{Binding PerformedUtc, StringFormat='{0:d}'}"
 										   TextColor="Gray" FontSize="12" />
