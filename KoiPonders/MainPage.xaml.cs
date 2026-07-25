@@ -292,6 +292,39 @@ public partial class MainPage : ContentPage
             await mapView.SetViewpointGeometryAsync(p.Geometry, 60);
     }
 
+    private void OnParcelTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is Element { BindingContext: Parcel parcel })
+            parcel.IsExpanded = !parcel.IsExpanded;
+    }
+
+    private async void OnRemoveParcelClicked(object? sender, EventArgs e)
+    {
+        if (sender is not Element { BindingContext: Parcel parcel }) return;
+        bool confirm = await DisplayAlert("Remove parcel", $"Remove \"{parcel.Name}\"? This cannot be undone.", "Remove", "Cancel");
+        if (!confirm) return;
+        _parcels.Remove(parcel);
+        RedrawParcels();
+        ParcelCountLabel.Text = RecordsContainer.IsVisible ? $"{_incidents.Count} Total" : $"{_parcels.Count} Total";
+        if (_incidents.Count > 0) RunRiskAnalysis();
+        await FarmStore.SaveAsync(_parcels, _incidents);
+    }
+
+    private void RedrawParcels()
+    {
+        _parcelOverlay.Graphics.Clear();
+        _parcelGraphics.Clear();
+        foreach (var parcel in _parcels)
+        {
+            if (parcel.Geometry is null) continue;
+            var parcelGraphic = new Graphic(parcel.Geometry, _parcelSymbol);
+            _parcelOverlay.Graphics.Add(parcelGraphic);
+            _parcelGraphics[parcelGraphic] = parcel;
+            var label = new TextSymbol($"{parcel.Name}  {parcel.Acres:F1} Ac", Color.White, 11, Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Center, Esri.ArcGISRuntime.Symbology.VerticalAlignment.Middle) { HaloColor = Color.FromArgb(190, 10, 30, 20), HaloWidth = 2 };
+            if (parcel.Geometry.Extent is { } extent) _parcelOverlay.Graphics.Add(new Graphic(extent.GetCenter(), label));
+        }
+    }
+
     // ---------- incident reporting ----------
 
     private void OnReportIncidentClicked(object sender, EventArgs e)
@@ -419,6 +452,7 @@ public partial class MainPage : ContentPage
                 Notes = report.Notes,
                 ReportDate = report.ObservedUtc.LocalDateTime,
                 Location = location,
+                ReportId = report.Id,
                 FieldName = _parcels.FirstOrDefault(p =>
                     p.Geometry is not null &&
                     GeometryEngine.Intersects(
@@ -570,6 +604,25 @@ public partial class MainPage : ContentPage
     {
         if (e.CurrentSelection.FirstOrDefault() is Incident inc && inc.Location is not null)
             await mapView.SetViewpointCenterAsync(inc.Location, 12000);
+    }
+
+    private void OnIncidentTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is Element { BindingContext: Incident incident })
+            incident.IsExpanded = !incident.IsExpanded;
+    }
+
+    private async void OnRemoveIncidentClicked(object? sender, EventArgs e)
+    {
+        if (sender is not Element { BindingContext: Incident incident }) return;
+        bool confirm = await DisplayAlert("Remove record", $"Remove the \"{incident.PestName}\" report? This cannot be undone.", "Remove", "Cancel");
+        if (!confirm) return;
+        if (incident.ReportId != Guid.Empty) await _reportStore.DeleteReportAsync(incident.ReportId);
+        _incidents.Remove(incident);
+        var graphic = _incidentGraphics.FirstOrDefault(kvp => kvp.Value == incident).Key;
+        if (graphic is not null) { _incidentOverlay.Graphics.Remove(graphic); _incidentGraphics.Remove(graphic); }
+        RunRiskAnalysis();
+        if (RecordsContainer.IsVisible) ParcelCountLabel.Text = $"{_incidents.Count} Total";
     }
 
     private async void OnGenerateSummary(object sender, EventArgs e)
