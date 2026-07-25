@@ -74,6 +74,18 @@ public class Incident : ObservableObject
     public byte[]? Photo { get; set; }
     public Guid ReportId { get; set; }
 
+    // ---------- neighbour alerting ----------
+
+    public bool AlertNeighbors { get; set; } = true;
+    public double AlertRadiusMiles { get; set; } = 5.0;
+    public int AlertedFarmCount { get; set; }
+
+    public string AlertDisplay => !AlertNeighbors
+        ? "Not shared"
+        : AlertedFarmCount == 0
+            ? "No nearby farms at risk"
+            : $"Alerted {AlertedFarmCount} farm(s) within {AlertRadiusMiles:F0} mi";
+
     public bool IsExpanded
     {
         get => _isExpanded;
