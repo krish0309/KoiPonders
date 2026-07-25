@@ -720,28 +720,4 @@ public partial class MainPage : ContentPage
 
         SummaryButton.IsEnabled = true;
     }
-
-    // ---------- temporary AI test (delete before the demo) ----------
-
-    private async void OnTestAiClicked(object sender, EventArgs e)
-    {
-        CloseActionMenu();
-        var photo = await FilePicker.Default.PickAsync(new PickOptions
-        {
-            FileTypes = FilePickerFileType.Images,
-            PickerTitle = "Select crop photo"
-        });
-        if (photo is null) return;
-
-        using var stream = await photo.OpenReadAsync();
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
-
-        var result = await PestClassifier.ClassifyAsync(ms.ToArray());
-
-        await DisplayAlertAsync("Result",
-            result is null ? "Failed — check Output window"
-                           : $"{result.PestName}\n{result.Severity} • {result.Confidence}%\n\n{result.Notes}",
-            "OK");
-    }
 }

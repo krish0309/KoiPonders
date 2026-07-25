@@ -318,9 +318,6 @@
             <Button Text="⌁   Report incident" Clicked="OnReportIncidentClicked"
                     BackgroundColor="#B91C1C" TextColor="White" FontSize="14" FontAttributes="Bold" FontFamily="SpaceGrotesk"
                     HeightRequest="48" CornerRadius="24" Padding="18,0" HorizontalOptions="End" />
-            <Button Text="✦   Test AI" Clicked="OnTestAiClicked"
-                    BackgroundColor="#6D4CCF" TextColor="White" FontSize="14" FontAttributes="Bold" FontFamily="SpaceGrotesk"
-                    HeightRequest="48" CornerRadius="24" Padding="18,0" HorizontalOptions="End" />
         </VerticalStackLayout>
 
         <HorizontalStackLayout ZIndex="50" Spacing="10" Margin="0,0,16,18"
