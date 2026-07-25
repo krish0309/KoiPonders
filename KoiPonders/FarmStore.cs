@@ -24,6 +24,7 @@ public static class FarmStore
         public string AffectedCrop { get; set; } = "";
         public string Status { get; set; } = "";
         public string Notes { get; set; } = "";
+        public string Treatment { get; set; } = "";
         public string FieldName { get; set; } = "";
         public int Confidence { get; set; }
         public DateTime ReportDate { get; set; }
@@ -61,6 +62,7 @@ public static class FarmStore
                         AffectedCrop = i.AffectedCrop,
                         Status = i.Status,
                         Notes = i.Notes,
+                        Treatment = i.Treatment,
                         FieldName = i.FieldName,
                         Confidence = i.Confidence,
                         ReportDate = i.ReportDate,
@@ -107,6 +109,7 @@ public static class FarmStore
                     AffectedCrop = i.AffectedCrop,
                     Status = i.Status,
                     Notes = i.Notes,
+                    Treatment = i.Treatment,
                     FieldName = i.FieldName,
                     Confidence = i.Confidence,
                     ReportDate = i.ReportDate,
@@ -119,5 +122,15 @@ public static class FarmStore
         }
 
         return (parcels, incidents);
+    }
+
+    /// <summary>Wipes the saved snapshot. Useful for resetting demo state.</summary>
+    public static void Reset()
+    {
+        try { if (File.Exists(FilePath)) File.Delete(FilePath); }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FarmStore] reset failed: {ex.Message}");
+        }
     }
 }

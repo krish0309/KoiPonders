@@ -74,6 +74,7 @@ public class Incident : ObservableObject
     }
 
     public string DateDisplay => $"{ReportDate:MMM dd, yyyy}";
+
     public string SeverityColor => Severity switch
     {
         "CRITICAL" => "#DC2626",
