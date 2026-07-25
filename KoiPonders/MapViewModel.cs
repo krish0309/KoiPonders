@@ -101,12 +101,27 @@ namespace KoiPonders
 
         public bool IsBusy => IsDrawing || IsGpsCapture;
 
+		public bool IsReporting
+		{
+			get => _isReporting;
+			private set
+			{
+				if (SetProperty(ref _isReporting, value))
+				{
+					RaiseCommandStates();
+				}
+			}
+		}
         public string StatusMessage
         {
             get => _statusMessage;
             private set => SetProperty(ref _statusMessage, value);
         }
 
+		/// <summary>
+		/// Updates the status banner from outside the view model (e.g. map tap handling).
+		/// </summary>
+		public void SetStatus(string message) => StatusMessage = message;
         public string NewFieldName
         {
             get => _newFieldName;
@@ -130,6 +145,10 @@ namespace KoiPonders
         public ICommand SaveFieldCommand { get; }
 
         public ICommand CancelCommand { get; }
+
+        public ICommand StartReportCommand { get; }
+
+        public ICommand CancelReportCommand { get; }
 
         /// <summary>
         /// Loads saved fields from storage and renders them on the map overlay.
@@ -297,8 +316,26 @@ namespace KoiPonders
             ResetEditingState();
             IsDrawing = false;
             IsGpsCapture = false;
-            StatusMessage = "Editing cancelled.";
-        }
+			StatusMessage = "Editing cancelled.";
+		}
+
+		private void StartReport()
+		{
+			if (Fields.Count == 0)
+			{
+				StatusMessage = "Add a field first, then tap inside it to report.";
+				return;
+			}
+
+			IsReporting = true;
+			StatusMessage = "Report mode: tap inside a field to log an incident there.";
+		}
+
+		private void CancelReport()
+		{
+			IsReporting = false;
+			StatusMessage = "Report cancelled.";
+		}
 
         private void ResetEditingState()
         {

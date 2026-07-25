@@ -45,8 +45,15 @@
 
             <!-- Idle actions -->
             <HorizontalStackLayout Spacing="6" IsVisible="{Binding IsEditing, Converter={StaticResource InverseBool}}">
-                <Button Text="Draw field" Command="{Binding StartDrawCommand}" />
-                <Button Text="Walk field" Command="{Binding StartGpsCaptureCommand}" />
+                <Button Text="Draw field" Command="{Binding StartDrawCommand}" IsVisible="{Binding IsReporting, Converter={StaticResource InverseBool}}" />
+                <Button Text="Walk field" Command="{Binding StartGpsCaptureCommand}"
+						IsVisible="{Binding IsReporting, Converter={StaticResource InverseBool}}" />
+				<Button Text="Report" Command="{Binding StartReportCommand}"
+						BackgroundColor="#EF6C00"
+						IsVisible="{Binding IsReporting, Converter={StaticResource InverseBool}}" />
+				<Button Text="Cancel report" Command="{Binding CancelReportCommand}"
+						BackgroundColor="#B71C1C"
+						IsVisible="{Binding IsReporting}" />
             </HorizontalStackLayout>
 
             <!-- Editing actions -->
