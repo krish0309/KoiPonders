@@ -6,6 +6,29 @@
 			 x:Class="KoiPonders.Views.ReportEditPage"
 			 x:DataType="vm:ReportEditViewModel"
 			 Title="{Binding Title}">
+			 Title="{Binding Title}"
+             BackgroundColor="#F5F9F7">
+
+	<ContentPage.Resources>
+		<Style TargetType="Label">
+			<Setter Property="TextColor" Value="Black" />
+		</Style>
+		<Style TargetType="Entry">
+			<Setter Property="TextColor" Value="Black" />
+			<Setter Property="PlaceholderColor" Value="#6B7280" />
+		</Style>
+		<Style TargetType="Editor">
+			<Setter Property="TextColor" Value="Black" />
+			<Setter Property="PlaceholderColor" Value="#6B7280" />
+	</Style>
+		<Style TargetType="Picker">
+			<Setter Property="TextColor" Value="Black" />
+			<Setter Property="TitleColor" Value="#6B7280" />
+		</Style>
+		<Style TargetType="DatePicker">
+			<Setter Property="TextColor" Value="Black" />
+		</Style>
+	</ContentPage.Resources>
 
 	<ScrollView>
 		<VerticalStackLayout Padding="16" Spacing="12">

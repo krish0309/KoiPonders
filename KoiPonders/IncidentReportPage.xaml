@@ -4,6 +4,21 @@
              x:Class="KoiPonders.IncidentReportPage"
              BackgroundColor="#F5F9F7">
 
+    <ContentPage.Resources>
+        <Style TargetType="Entry">
+            <Setter Property="TextColor" Value="Black" />
+            <Setter Property="PlaceholderColor" Value="#6B7280" />
+        </Style>
+        <Style TargetType="Editor">
+            <Setter Property="TextColor" Value="Black" />
+            <Setter Property="PlaceholderColor" Value="#6B7280" />
+        </Style>
+        <Style TargetType="Picker">
+            <Setter Property="TextColor" Value="Black" />
+            <Setter Property="TitleColor" Value="#6B7280" />
+        </Style>
+    </ContentPage.Resources>
+
     <Grid RowDefinitions="Auto,*">
 
         <VerticalStackLayout Grid.Row="0" Padding="24,20,24,12" Spacing="2">
