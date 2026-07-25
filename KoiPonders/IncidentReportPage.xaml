@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="KoiPonders.IncidentReportPage"
+             BackgroundColor="#F5F9F7">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <VerticalStackLayout Grid.Row="0" Padding="24,20,24,12" Spacing="2">
+            <Label x:Name="TitleLabel" Text="Report an Incident"
+                   FontSize="24" FontAttributes="Bold" TextColor="#0F2A1D" />
+            <Label x:Name="LocationLabel" FontSize="12" TextColor="#15803D" />
+        </VerticalStackLayout>
+
+        <!-- ========== STEP 1 ========== -->
+        <ScrollView x:Name="Step1" Grid.Row="1" Padding="24,0,24,24">
+            <VerticalStackLayout Spacing="16">
+
+                <Label Text="Show us the problem" FontSize="15"
+                       FontAttributes="Bold" TextColor="#0F2A1D" />
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Button Text="📷  Take Photo" Clicked="OnTakePhoto"
+                            BackgroundColor="#15803D" TextColor="White"
+                            FontSize="14" HeightRequest="52" CornerRadius="8" />
+                    <Button Grid.Column="1" Text="🖼  Upload Photo" Clicked="OnUploadPhoto"
+                            BackgroundColor="#1E3A2F" TextColor="White"
+                            FontSize="14" HeightRequest="52" CornerRadius="8" />
+                </Grid>
+
+                <Border x:Name="PhotoFrame" IsVisible="False"
+                        BackgroundColor="White" Stroke="#C5DED0"
+                        StrokeThickness="1" Padding="8">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Image x:Name="PhotoPreview" HeightRequest="200" Aspect="AspectFit" />
+                </Border>
+
+                <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="12" Margin="0,4">
+                    <BoxView HeightRequest="1" Color="#D9E6EF" VerticalOptions="Center" />
+                    <Label Grid.Column="1" Text="OR" FontSize="11" TextColor="#8496A0" />
+                    <BoxView Grid.Column="2" HeightRequest="1" Color="#D9E6EF" VerticalOptions="Center" />
+                </Grid>
+
+                <Label Text="Describe what you're seeing" FontSize="15"
+                       FontAttributes="Bold" TextColor="#0F2A1D" />
+                <Border BackgroundColor="White" Stroke="#D9E6EF"
+                        StrokeThickness="1" Padding="12,4">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Editor x:Name="DescriptionEditor" HeightRequest="110"
+                            FontSize="14" BackgroundColor="Transparent"
+                            Placeholder="e.g. leaves have ragged holes and there's sawdust-looking stuff in the whorl" />
+                </Border>
+
+                <Button x:Name="AnalyzeButton" Text="Analyze"
+                        Clicked="OnAnalyze"
+                        BackgroundColor="#15803D" TextColor="White"
+                        FontSize="16" HeightRequest="54" CornerRadius="8" Margin="0,8,0,0" />
+
+                <Label x:Name="Step1StatusLabel" FontSize="12" TextColor="#8496A0"
+                       HorizontalOptions="Center" />
+
+                <Button Text="Cancel" Clicked="OnCancel"
+                        BackgroundColor="Transparent" TextColor="#8496A0"
+                        FontSize="13" HeightRequest="40" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ========== STEP 2 ========== -->
+        <ScrollView x:Name="Step2" Grid.Row="1" IsVisible="False" Padding="24,0,24,24">
+            <VerticalStackLayout Spacing="14">
+
+                <Border BackgroundColor="#EAF5EF" Stroke="#15803D"
+                        StrokeThickness="1" Padding="14,10">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="4">
+                        <Label x:Name="AiBadgeLabel" FontSize="12"
+                               FontAttributes="Bold" TextColor="#15803D" />
+                        <Label Text="Review and correct anything below before saving."
+                               FontSize="11" TextColor="#4A5D54" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label Text="Problem" FontSize="13" FontAttributes="Bold" TextColor="#0F2A1D" />
+                <Border BackgroundColor="White" Stroke="#D9E6EF" StrokeThickness="1" Padding="12,2">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Entry x:Name="ProblemEntry" FontSize="14" BackgroundColor="Transparent" />
+                </Border>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Category" FontSize="13" FontAttributes="Bold" TextColor="#0F2A1D" />
+                        <Border BackgroundColor="White" Stroke="#D9E6EF" StrokeThickness="1" Padding="12,0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8" />
+                            </Border.StrokeShape>
+                            <Picker x:Name="CategoryPicker" FontSize="14" BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="6">
+                        <Label Text="Severity" FontSize="13" FontAttributes="Bold" TextColor="#0F2A1D" />
+                        <Border BackgroundColor="White" Stroke="#D9E6EF" StrokeThickness="1" Padding="12,0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8" />
+                            </Border.StrokeShape>
+                            <Picker x:Name="SeverityPicker" FontSize="14" BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <Label Text="Affected crop" FontSize="13" FontAttributes="Bold" TextColor="#0F2A1D" />
+                <Border BackgroundColor="White" Stroke="#D9E6EF" StrokeThickness="1" Padding="12,2">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Entry x:Name="CropEntry" FontSize="14" BackgroundColor="Transparent" />
+                </Border>
+
+                <Label Text="What the AI observed" FontSize="13" FontAttributes="Bold" TextColor="#0F2A1D" />
+                <Border BackgroundColor="White" Stroke="#D9E6EF" StrokeThickness="1" Padding="12,4">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Editor x:Name="ObservedEditor" HeightRequest="80"
+                            FontSize="14" BackgroundColor="Transparent" />
+                </Border>
+
+                <Label Text="How to deal with it" FontSize="13" FontAttributes="Bold" TextColor="#0F2A1D" />
+                <Border BackgroundColor="White" Stroke="#D9E6EF" StrokeThickness="1" Padding="12,4">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Editor x:Name="TreatmentEditor" HeightRequest="100"
+                            FontSize="14" BackgroundColor="Transparent" />
+                </Border>
+
+                <Label Text="Your notes" FontSize="13" FontAttributes="Bold" TextColor="#0F2A1D" />
+                <Border BackgroundColor="White" Stroke="#D9E6EF" StrokeThickness="1" Padding="12,4">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <Editor x:Name="UserNotesEditor" HeightRequest="90"
+                            FontSize="14" BackgroundColor="Transparent"
+                            Placeholder="Anything the AI missed, field conditions, actions already taken…" />
+                </Border>
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,8,0,0">
+                    <Button Text="Back" Clicked="OnBack"
+                            BackgroundColor="#DDE8F0" TextColor="#5A6E77"
+                            FontSize="14" WidthRequest="100" HeightRequest="52" CornerRadius="8" />
+                    <Button Grid.Column="1" Text="Save Report" Clicked="OnSave"
+                            BackgroundColor="#15803D" TextColor="White"
+                            FontSize="16" HeightRequest="52" CornerRadius="8" />
+                </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>
