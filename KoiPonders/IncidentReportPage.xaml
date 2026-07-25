@@ -167,6 +167,37 @@
                             Placeholder="Anything the AI missed, field conditions, actions already taken…" />
                 </Border>
 
+                <!-- ===== ALERT NEIGHBOURING FARMS ===== -->
+                <Border BackgroundColor="White" Stroke="#A5D6A7"
+                        StrokeThickness="1" Padding="14,12" Margin="0,4,0,0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="10">
+
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Switch x:Name="AlertSwitch" IsToggled="True"
+                                    OnColor="#2E7D32" ThumbColor="White"
+                                    Toggled="OnAlertToggled" VerticalOptions="Center" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="1" Margin="10,0,0,0">
+                                <Label Text="Alert neighbouring farms" FontSize="14"
+                                       FontAttributes="Bold" FontFamily="SpaceGrotesk"
+                                       TextColor="#2E4735" />
+                                <Label Text="Notify nearby growers of susceptible crops"
+                                       FontSize="11" TextColor="#8496A0" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <VerticalStackLayout x:Name="RadiusBlock" Spacing="4">
+                            <Label x:Name="RadiusLabel" Text="Alert radius: 5.0 miles"
+                                   FontSize="12" TextColor="#4A5D54" />
+                            <Slider x:Name="RadiusSlider" Minimum="1" Maximum="25" Value="5"
+                                    MinimumTrackColor="#2E7D32" ThumbColor="#2E7D32"
+                                    ValueChanged="OnRadiusChanged" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,8,0,0">
                     <Button Text="Back" Clicked="OnBack"
                             BackgroundColor="#DDE8F0" TextColor="#5A6E77"

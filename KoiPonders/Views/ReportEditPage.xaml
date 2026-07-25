@@ -5,6 +5,7 @@
 			 xmlns:models="clr-namespace:KoiPonders.Models"
 			 x:Class="KoiPonders.Views.ReportEditPage"
 			 x:DataType="vm:ReportEditViewModel"
+			 Title="{Binding Title}">
 			 Title="{Binding Title}"
              BackgroundColor="#F5F9F7">
 

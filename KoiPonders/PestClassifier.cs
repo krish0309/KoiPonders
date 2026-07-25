@@ -258,6 +258,7 @@ public static class PestClassifier
             return $"{list.Count} incident(s) logged across " +
                    $"{list.Select(i => i.FieldName).Distinct().Count()} field(s). " +
                    $"Highest concern is {worst.PestName} at {worst.Severity} severity in {worst.FieldName}. " +
+                   $"Recommend scouting adjacent parcels within the spread radius.";
                    $"Suggested actions: scout adjacent parcels within the spread radius, apply the recommended treatment to affected plants, " +
                    $"isolate and sanitize to limit further spread, and re-inspect the site in a few days to confirm the response is working.";
         }
@@ -266,6 +267,7 @@ public static class PestClassifier
         {
             var payload = new
             {
+                max_tokens = 400,
                 max_tokens = 500,
                 temperature = 0.3,
                 messages = new object[]
@@ -273,6 +275,7 @@ public static class PestClassifier
                     new
                     {
                         role = "system",
+                        content = "You are an agronomy analyst. Write 2-3 concise sentences. No markdown, no bullet points."
                         content = "You are an agronomy analyst. Write a clear, verbose brief in 4-6 sentences. No markdown, no bullet points."
                     },
                     new
@@ -280,6 +283,7 @@ public static class PestClassifier
                         role = "user",
                         content =
                             "Summarize these farm incident records for a dashboard. " +
+                            "Note any pattern, the most urgent threat, and one recommended action.\n\n" + digest
                             "Note any pattern and the most urgent threat, then give the grower several specific, " +
                             "actionable suggestions for how to respond to these challenges " +
                             "(such as scouting, treatment, containment, and follow-up monitoring).\n\n" + digest
@@ -299,6 +303,19 @@ public static class PestClassifier
             {
                 System.Diagnostics.Debug.WriteLine($"[Summarize] {resp.StatusCode}: {body}");
                 return "Summary unavailable — check connection.";
+            }
+
+            using var doc = JsonDocument.Parse(body);
+            return doc.RootElement
+                      .GetProperty("choices")[0]
+                      .GetProperty("message")
+                      .GetProperty("content").GetString()
+                   ?? "Summary unavailable.";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Summarize] {ex.Message}");
+            return "Summary unavailable.";
             }
 
             using var doc = JsonDocument.Parse(body);

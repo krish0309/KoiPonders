@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:esri="http://schemas.esri.com/arcgis/runtime/2013"
@@ -42,6 +42,14 @@
                     <RoundRectangle CornerRadius="14" />
                 </Border.StrokeShape>
                 <HorizontalStackLayout Spacing="10">
+                    <Border BackgroundColor="#2E7D32" Stroke="Transparent"
+                            WidthRequest="34" HeightRequest="34" Padding="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+                        <Label Text="⌖" TextColor="White" FontSize="20"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
                     <Image Source="farmassist_logo.png"
                            WidthRequest="72" HeightRequest="72"
                            Aspect="AspectFit"
@@ -137,6 +145,7 @@
                     </VerticalStackLayout>
                     <Button Grid.Column="1" Text="✕" Clicked="OnClosePanelClicked"
                             BackgroundColor="#EDF3EF" TextColor="#315440"
+                            WidthRequest="42" HeightRequest="42" Padding="0" CornerRadius="21"
                             WidthRequest="72" HeightRequest="72" Padding="0" CornerRadius="21"
                             SemanticProperties.Description="Close field workspace" />
                 </Grid>
@@ -309,6 +318,10 @@
         <VerticalStackLayout x:Name="ActionMenu" IsVisible="False" ZIndex="45"
                              Spacing="9" Margin="0,0,16,94"
                              HorizontalOptions="End" VerticalOptions="End">
+            <Button x:Name="ConfirmButton" Text="✓   Confirm boundary" Clicked="OnConfirmClicked"
+                    IsEnabled="False" Style="{StaticResource ActionButtonStyle}" />
+            <Button Text="↶   Undo last point" Clicked="OnUndoClicked"
+                    Style="{StaticResource ActionButtonStyle}" />
             <Button x:Name="FreehandToolButton" Text="✎   Draw freehand" Clicked="OnFreehandToolClicked"
                     Style="{StaticResource ActionButtonStyle}" />
             <Button x:Name="PolygonToolButton" Text="⬡   Draw polygon" Clicked="OnPolygonToolClicked"
@@ -324,6 +337,7 @@
                     HeightRequest="48" CornerRadius="24" Padding="18,0" HorizontalOptions="End" />
         </VerticalStackLayout>
 
+        <HorizontalStackLayout ZIndex="50" Spacing="10" Margin="0,0,16,18"
         <Button x:Name="ConfirmButton" Text="✓   Confirm boundary" Clicked="OnConfirmClicked"
                 IsVisible="False" IsEnabled="False" ZIndex="45"
                 Margin="16,0,16,94" HorizontalOptions="Center" VerticalOptions="End"
@@ -348,6 +362,7 @@
                 </Button.Shadow>
             </Button>
         </HorizontalStackLayout>
+    </Grid>
 
 		<!-- Toggleable spread-forecast layer chip. Appears once a forecast exists. -->
 		<Border x:Name="SpreadLayerChip" IsVisible="False" ZIndex="15"
