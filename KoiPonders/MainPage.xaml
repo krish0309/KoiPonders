@@ -120,22 +120,38 @@
 
         </Grid>
 
+        <!-- ============ RIGHT PANEL ============ -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto"
         <!-- ============ PARCEL PANEL ============ -->
         <Grid x:Name="ParcelPanel"
               Grid.Column="1"
               RowDefinitions="Auto,*,Auto"
               Padding="20,24" RowSpacing="14">
 
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                <Label Text="Mapped Parcels" FontSize="17"
-                       FontAttributes="Bold" TextColor="#0F2A1D"
+            <!-- tab switcher -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button x:Name="ParcelsTabButton" Text="Parcels"
+                        Clicked="OnShowParcels"
+                        BackgroundColor="#15803D" TextColor="White"
+                        FontSize="13" HeightRequest="38" CornerRadius="6" />
+                <Button x:Name="RecordsTabButton" Grid.Column="1" Text="Records"
+                        Clicked="OnShowRecords"
+                        BackgroundColor="#DDE8F0" TextColor="#5A6E77"
+                        FontSize="13" HeightRequest="38" CornerRadius="6" />
+            </Grid>
+
+            <!-- header -->
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                <Label x:Name="PanelTitleLabel" Text="Mapped Parcels"
+                       FontSize="17" FontAttributes="Bold" TextColor="#0F2A1D"
                        VerticalOptions="Center" />
                 <Label x:Name="ParcelCountLabel" Grid.Column="1"
                        Text="0 Total" FontSize="12" TextColor="#6B7F76"
                        VerticalOptions="Center" />
             </Grid>
 
-            <CollectionView x:Name="ParcelList" Grid.Row="1"
+            <!-- PARCELS -->
+            <CollectionView x:Name="ParcelList" Grid.Row="2"
                             SelectionMode="Single"
                             SelectionChanged="OnParcelSelected">
                 <CollectionView.ItemsLayout>
@@ -165,7 +181,72 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <Button Grid.Row="2" Text="+  Add New Boundary"
+            <!-- RECORDS -->
+            <Grid x:Name="RecordsContainer" Grid.Row="2" IsVisible="False"
+                  RowDefinitions="*,Auto" RowSpacing="10">
+
+                <CollectionView x:Name="IncidentList" Grid.Row="0"
+                                SelectionMode="Single"
+                                SelectionChanged="OnIncidentSelected">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="local:Incident">
+                            <Border BackgroundColor="White" Stroke="#D9E6EF"
+                                    StrokeThickness="1" Padding="14,12">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                                <VerticalStackLayout Spacing="6">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Text="{Binding PestName}" FontSize="14"
+                                               FontAttributes="Bold" TextColor="#0F2A1D" />
+                                        <Border Grid.Column="1"
+                                                BackgroundColor="{Binding SeverityColor}"
+                                                Stroke="Transparent" Padding="8,2">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="4" />
+                                            </Border.StrokeShape>
+                                            <Label Text="{Binding Severity}" FontSize="9"
+                                                   FontAttributes="Bold" TextColor="White" />
+                                        </Border>
+                                    </Grid>
+                                    <Label Text="{Binding Classification}"
+                                           FontSize="11" TextColor="#5A6E77" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Text="{Binding FieldName}"
+                                               FontSize="11" TextColor="#8496A0" />
+                                        <Label Grid.Column="1" Text="{Binding DateDisplay}"
+                                               FontSize="11" TextColor="#8496A0" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- AI overview -->
+                <Border Grid.Row="1" BackgroundColor="#F0F7F3" Stroke="#C5DED0"
+                        StrokeThickness="1" Padding="14,12">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="AI Outbreak Insights" FontSize="13"
+                               FontAttributes="Bold" TextColor="#15803D" />
+                        <Label x:Name="AiSummaryLabel"
+                               Text="Generate a summary of all logged incidents."
+                               FontSize="11" TextColor="#4A5D54" LineHeight="1.4" />
+                        <Button x:Name="SummaryButton" Text="Generate Summary"
+                                Clicked="OnGenerateSummary"
+                                BackgroundColor="#15803D" TextColor="White"
+                                FontSize="12" HeightRequest="36" CornerRadius="6" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Button x:Name="AddBoundaryButton" Grid.Row="3" Text="+  Add New Boundary"
                     Clicked="OnPolygonToolClicked"
                     BackgroundColor="#15803D" TextColor="White"
                     FontSize="15" HeightRequest="52" CornerRadius="8" />
