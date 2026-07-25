@@ -6,6 +6,7 @@ namespace KoiPonders;
 public class Parcel : ObservableObject
 {
     private string _name = "";
+    private string _crop = "";
     private double _acres;
     private DateTime _mappedDate;
     private bool _isExpanded;
@@ -18,6 +19,12 @@ public class Parcel : ObservableObject
             if (SetProperty(ref _name, value))
                 OnPropertyChanged(nameof(AcresDisplay));
         }
+    }
+
+    public string Crop
+    {
+        get => _crop;
+        set => SetProperty(ref _crop, value);
     }
 
     public double Acres
