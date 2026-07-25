@@ -54,6 +54,43 @@ public partial class MainPage : ContentPage
         _geometryEditor.PropertyChanged += OnEditorPropertyChanged;
 
         ParcelList.ItemsSource = _parcels;
+        SizeChanged += OnPageSizeChanged;
+    }
+
+    private void OnPageSizeChanged(object? sender, EventArgs e)
+    {
+        var usePhoneLayout = Width > 0 && Width < 700;
+
+        if (usePhoneLayout)
+        {
+            RootGrid.ColumnDefinitions = [new ColumnDefinition(GridLength.Star)];
+            RootGrid.RowDefinitions =
+            [
+                new RowDefinition(new GridLength(3, GridUnitType.Star)),
+                new RowDefinition(new GridLength(2, GridUnitType.Star))
+            ];
+            Microsoft.Maui.Controls.Grid.SetColumn(MapPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetRow(MapPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetColumn(ParcelPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetRow(ParcelPanel, 1);
+            MapPanel.Margin = new Thickness(8, 8, 8, 0);
+            ParcelPanel.Padding = new Thickness(12, 10);
+        }
+        else
+        {
+            RootGrid.ColumnDefinitions =
+            [
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(new GridLength(340))
+            ];
+            RootGrid.RowDefinitions = [new RowDefinition(GridLength.Star)];
+            Microsoft.Maui.Controls.Grid.SetColumn(MapPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetRow(MapPanel, 0);
+            Microsoft.Maui.Controls.Grid.SetColumn(ParcelPanel, 1);
+            Microsoft.Maui.Controls.Grid.SetRow(ParcelPanel, 0);
+            MapPanel.Margin = new Thickness(16);
+            ParcelPanel.Padding = new Thickness(20, 24);
+        }
     }
 
     protected override async void OnAppearing()
@@ -69,7 +106,7 @@ public partial class MainPage : ContentPage
         catch (Exception ex)
         {
             StatusLabel.Text = "Farm imagery failed to load";
-            await DisplayAlert("Imagery unavailable", ex.Message, "OK");
+            await DisplayAlertAsync("Imagery unavailable", ex.Message, "OK");
         }
     }
 
@@ -134,7 +171,7 @@ public partial class MainPage : ContentPage
         if (geometry is not Polygon polygon || polygon.IsEmpty ||
             polygon.Parts.Count == 0 || polygon.Parts[0].PointCount < 3)
         {
-            await DisplayAlert("Not enough points",
+            await DisplayAlertAsync("Not enough points",
                 "Tap at least three points to close a field boundary.", "OK");
             return;
         }
@@ -366,7 +403,7 @@ public partial class MainPage : ContentPage
 
         var result = await PestClassifier.ClassifyAsync(ms.ToArray());
 
-        await DisplayAlert("Result",
+        await DisplayAlertAsync("Result",
             result is null ? "Failed — check Output window"
                            : $"{result.PestName}\n{result.Severity} · {result.Confidence}%\n\n{result.Notes}",
             "OK");
