@@ -51,22 +51,6 @@ public partial class MainPage : ContentPage
         IncidentList.ItemsSource = _incidents;
     }
 
-    protected override async void OnAppearing()
-    {
-        base.OnAppearing();
-
-        try
-        {
-            StatusLabel.Text = "Loading local farm imagery…";
-            await _viewModel.InitializeAsync();
-            StatusLabel.Text = "WGS84 • EPSG:3857";
-        }
-        catch (Exception ex)
-        {
-            StatusLabel.Text = "Farm imagery failed to load";
-            await DisplayAlert("Imagery unavailable", ex.Message, "OK");
-        }
-    }
 
     // ---------- tools ----------
 
