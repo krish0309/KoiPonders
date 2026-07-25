@@ -119,12 +119,11 @@
                 </VerticalStackLayout>
             </Border>
         </Grid>
-
-        <!-- ============ PARCEL PANEL ============ -->
-        <Grid x:Name="ParcelPanel"
-              Grid.Column="1"
-              RowDefinitions="Auto,Auto,*,Auto"
-              Padding="20,24" RowSpacing="14">
+<BoxView x:Name="PanelBackdrop" IsVisible="False" ZIndex="20" Color="#520B1F15">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnClosePanelClicked" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
 
         <!-- Parcels and records now live in a responsive slide-over drawer. -->
         <Border x:Name="ParcelPanel" IsVisible="False" ZIndex="30"
