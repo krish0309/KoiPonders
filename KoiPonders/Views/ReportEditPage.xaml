@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:vm="clr-namespace:KoiPonders.ViewModels"
+			 xmlns:models="clr-namespace:KoiPonders.Models"
+			 x:Class="KoiPonders.Views.ReportEditPage"
+			 x:DataType="vm:ReportEditViewModel"
+			 Title="{Binding Title}">
+
+	<ScrollView>
+		<VerticalStackLayout Padding="16" Spacing="12">
+
+			<Label Text="{Binding LocationText}" FontSize="14" TextColor="#2E7D32" FontAttributes="Bold" />
+
+			<Label Text="Problem" FontAttributes="Bold" />
+			<Entry Placeholder="e.g. Aphids, Powdery mildew" Text="{Binding ProblemName}" />
+
+			<Label Text="Category" FontAttributes="Bold" />
+			<Picker ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}" />
+
+			<Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+				<VerticalStackLayout Grid.Column="0" Spacing="4">
+					<Label Text="Severity" FontAttributes="Bold" />
+					<Picker ItemsSource="{Binding Severities}" SelectedItem="{Binding Severity}" />
+				</VerticalStackLayout>
+				<VerticalStackLayout Grid.Column="1" Spacing="4">
+					<Label Text="Status" FontAttributes="Bold" />
+					<Picker ItemsSource="{Binding Statuses}" SelectedItem="{Binding Status}" />
+				</VerticalStackLayout>
+			</Grid>
+
+			<Label FontAttributes="Bold">
+				<Label.Text>
+					<MultiBinding StringFormat="{}Affected area: {0:0}%">
+						<Binding Path="AffectedAreaPercent" />
+					</MultiBinding>
+				</Label.Text>
+			</Label>
+			<Slider Minimum="0" Maximum="100" Value="{Binding AffectedAreaPercent}" />
+
+			<Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+				<VerticalStackLayout Grid.Column="0" Spacing="4">
+					<Label Text="Observed" FontAttributes="Bold" />
+					<DatePicker Date="{Binding ObservedDate}" />
+				</VerticalStackLayout>
+				<VerticalStackLayout Grid.Column="1" Spacing="4">
+					<Label Text="Follow-up" FontAttributes="Bold" />
+					<DatePicker Date="{Binding FollowUpDate}" />
+				</VerticalStackLayout>
+			</Grid>
+
+			<Label Text="Notes" FontAttributes="Bold" />
+			<Editor Placeholder="Observations, spread, conditions…"
+					HeightRequest="90"
+					Text="{Binding Notes}" />
+
+			<!-- Photos -->
+			<Grid ColumnDefinitions="*,Auto">
+				<Label Text="Photos" FontAttributes="Bold" VerticalOptions="Center" />
+				<Button Grid.Column="1" Text="Add photo" Padding="10,4" FontSize="13"
+						Command="{Binding AddPhotoCommand}" />
+			</Grid>
+			<CollectionView ItemsSource="{Binding Photos}" HeightRequest="120">
+				<CollectionView.ItemsLayout>
+					<LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
+				</CollectionView.ItemsLayout>
+				<CollectionView.ItemTemplate>
+					<DataTemplate x:DataType="models:ReportPhoto">
+						<Grid WidthRequest="110" HeightRequest="110">
+							<Image Source="{Binding FilePath}" Aspect="AspectFill" />
+							<Button Text="✕" WidthRequest="30" HeightRequest="30" Padding="0"
+									FontSize="12" BackgroundColor="#B71C1C"
+									HorizontalOptions="End" VerticalOptions="Start"
+									Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.RemovePhotoCommand}"
+									CommandParameter="{Binding .}" />
+						</Grid>
+					</DataTemplate>
+				</CollectionView.ItemTemplate>
+			</CollectionView>
+
+			<!-- Treatments -->
+			<Grid ColumnDefinitions="*,Auto">
+				<Label Text="Treatment actions" FontAttributes="Bold" VerticalOptions="Center" />
+				<Button Grid.Column="1" Text="Add action" Padding="10,4" FontSize="13"
+						Command="{Binding AddTreatmentCommand}" />
+			</Grid>
+			<CollectionView ItemsSource="{Binding Treatments}">
+				<CollectionView.ItemTemplate>
+					<DataTemplate x:DataType="models:TreatmentAction">
+						<Border Margin="0,4" Padding="10" StrokeShape="RoundRectangle 8"
+								Stroke="#DDDDDD">
+							<Grid ColumnDefinitions="*,Auto">
+								<VerticalStackLayout Grid.Column="0" Spacing="2">
+									<Label Text="{Binding Action}" FontAttributes="Bold" />
+									<Label Text="{Binding Product}" TextColor="Gray" FontSize="13" />
+									<Label Text="{Binding PerformedUtc, StringFormat='{0:d}'}"
+										   TextColor="Gray" FontSize="12" />
+								</VerticalStackLayout>
+								<Button Grid.Column="1" Text="✕" WidthRequest="34" Padding="0"
+										BackgroundColor="#B71C1C" FontSize="12"
+										VerticalOptions="Center"
+										Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.RemoveTreatmentCommand}"
+										CommandParameter="{Binding .}" />
+							</Grid>
+						</Border>
+					</DataTemplate>
+				</CollectionView.ItemTemplate>
+			</CollectionView>
+
+			<Button Text="Save report" Margin="0,8,0,0"
+					BackgroundColor="#1B5E20" TextColor="White"
+					Command="{Binding SaveCommand}" />
+			<Button Text="Delete report"
+					BackgroundColor="#B71C1C" TextColor="White"
+					IsVisible="{Binding CanDelete}"
+					Command="{Binding DeleteCommand}" />
+		</VerticalStackLayout>
+	</ScrollView>
+</ContentPage>

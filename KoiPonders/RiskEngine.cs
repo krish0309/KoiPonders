@@ -57,7 +57,10 @@ public static class RiskEngine
             {
                 if (p.Geometry is null) continue;
 
-                var geom = GeometryEngine.Project(p.Geometry, buffer.SpatialReference);
+                var bufferSpatialReference = buffer.SpatialReference;
+                if (bufferSpatialReference is null) continue;
+
+                var geom = GeometryEngine.Project(p.Geometry, bufferSpatialReference);
 
                 // Field containing the incident is infected, not merely at risk.
                 if (GeometryEngine.Intersects(geom, inc.Location))
