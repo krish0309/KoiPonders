@@ -4,6 +4,10 @@ using Esri.ArcGISRuntime.UI;
 using Esri.ArcGISRuntime.UI.Editing;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
+using KoiPonders.Models;
+using KoiPonders.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Color = System.Drawing.Color;
 using MauiColor = Microsoft.Maui.Graphics.Color;
 
@@ -21,6 +25,8 @@ public partial class MainPage : ContentPage
     private readonly ObservableCollection<Parcel> _parcels = new();
     private readonly ObservableCollection<Incident> _incidents = new();
 
+    private readonly IReportStore _reportStore;
+
     private bool _awaitingIncidentTap;
     private bool _loaded;
 
@@ -35,6 +41,8 @@ public partial class MainPage : ContentPage
         InitializeComponent();
         _viewModel = new MapViewModel();
         BindingContext = _viewModel;
+
+        _reportStore = MauiProgram.Services.GetRequiredService<IReportStore>();
 
         mapView.GraphicsOverlays ??= new GraphicsOverlayCollection();
         mapView.GraphicsOverlays.Add(_parcelOverlay);
@@ -64,7 +72,7 @@ public partial class MainPage : ContentPage
         catch (Exception ex)
         {
             StatusLabel.Text = "Farm imagery failed to load";
-            await DisplayAlert("Imagery unavailable", ex.Message, "OK");
+            await DisplayAlertAsync("Imagery unavailable", ex.Message, "OK");
         }
     }
 
@@ -129,7 +137,7 @@ public partial class MainPage : ContentPage
         if (geometry is not Polygon polygon || polygon.IsEmpty ||
             polygon.Parts.Count == 0 || polygon.Parts[0].PointCount < 3)
         {
-            await DisplayAlert("Not enough points",
+            await DisplayAlertAsync("Not enough points",
                 "Tap at least three points to close a field boundary.", "OK");
             return;
         }
@@ -199,39 +207,57 @@ public partial class MainPage : ContentPage
         _awaitingIncidentTap = false;
         StatusLabel.Text = "WGS84 • EPSG:3857";
 
-        var file = await FilePicker.Default.PickAsync(new PickOptions
+        // The report is still initiated by tapping the map. Instead of uploading a photo
+        // for AI classification, we now open the report form (ported from the kyle branch)
+        // where the user enters the details by hand.
+        var wgs84 = e.Location.SpatialReference is { Wkid: 4326 }
+            ? e.Location
+            : GeometryEngine.Project(e.Location, SpatialReferences.Wgs84) as MapPoint;
+        if (wgs84 is null) return;
+
+        var route = $"{nameof(Views.ReportEditPage)}" +
+            $"?lat={wgs84.Y.ToString(CultureInfo.InvariantCulture)}" +
+            $"&lon={wgs84.X.ToString(CultureInfo.InvariantCulture)}";
+
+        await Shell.Current.GoToAsync(route);
+    }
+
+    // Rebuilds the incident pins and risk analysis from the saved reports so that the
+    // existing FarmGuard threat-assessment logic keeps working with form-entered reports.
+    private async Task ReloadReportsAsync()
+    {
+        var reports = await _reportStore.GetReportsAsync();
+
+        _incidents.Clear();
+        _incidentOverlay.Graphics.Clear();
+
+        foreach (var report in reports)
         {
-            FileTypes = FilePickerFileType.Images,
-            PickerTitle = "Photo evidence"
-        });
-        if (file is null) return;
+            if (!report.HasLocation) continue;
 
-        using var stream = await file.OpenReadAsync();
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
-        var bytes = ms.ToArray();
+            var location = new MapPoint(
+                report.Longitude!.Value, report.Latitude!.Value, SpatialReferences.Wgs84);
 
-        StatusLabel.Text = "Analyzing photo…";
-        var incident = await PestClassifier.ClassifyAsync(bytes);
-        StatusLabel.Text = "WGS84 • EPSG:3857";
+            var incident = new Incident
+            {
+                PestName = report.ProblemName,
+                Classification = report.Category.ToString(),
+                Severity = MapSeverity(report.Severity),
+                Status = report.Status.ToString(),
+                Notes = report.Notes,
+                ReportDate = report.ObservedUtc.LocalDateTime,
+                Location = location,
+                FieldName = _parcels.FirstOrDefault(p =>
+                    p.Geometry is not null &&
+                    GeometryEngine.Intersects(
+                        GeometryEngine.Project(p.Geometry, location.SpatialReference),
+                        location))?.Name ?? "Unassigned"
+            };
 
-        if (incident is null)
-        {
-            await DisplayAlert("Analysis failed",
-                "No result returned — check the Output window.", "OK");
-            return;
+            _incidents.Add(incident);
+            DrawIncident(incident);
         }
 
-        incident.Location = e.Location;
-        incident.Photo = bytes;
-        incident.FieldName = _parcels.FirstOrDefault(p =>
-            p.Geometry is not null &&
-            GeometryEngine.Intersects(
-                GeometryEngine.Project(p.Geometry, e.Location.SpatialReference),
-                e.Location))?.Name ?? "Unassigned";
-
-        _incidents.Add(incident);
-        DrawIncident(incident);
         RunRiskAnalysis();
 
         if (RecordsContainer.IsVisible)
@@ -242,6 +268,14 @@ public partial class MainPage : ContentPage
             $"{incident.Classification} · {incident.Severity} · {incident.Confidence}% confidence\n" +
             $"Field: {incident.FieldName}\n\n{incident.Notes}", "OK");
     }
+
+    private static string MapSeverity(Models.Severity severity) => severity switch
+    {
+        Models.Severity.Critical => "CRITICAL",
+        Models.Severity.High => "HIGH",
+        Models.Severity.Moderate => "MEDIUM",
+        _ => "LOW"
+    };
 
     private void DrawIncident(Incident inc)
     {
@@ -313,6 +347,12 @@ public partial class MainPage : ContentPage
 
     private async void OnClearIncidents(object sender, EventArgs e)
     {
+        // Clear both the in-memory pins and the persisted reports so the cleared state
+        // is not repopulated the next time the page reloads reports.
+        var reports = await _reportStore.GetReportsAsync();
+        foreach (var report in reports)
+            await _reportStore.DeleteReportAsync(report.Id);
+
         _incidents.Clear();
         _incidentOverlay.Graphics.Clear();
         _threatOverlay.Graphics.Clear();
@@ -395,7 +435,7 @@ public partial class MainPage : ContentPage
 
         var result = await PestClassifier.ClassifyAsync(ms.ToArray());
 
-        await DisplayAlert("Result",
+        await DisplayAlertAsync("Result",
             result is null ? "Failed — check Output window"
                            : $"{result.PestName}\n{result.Severity} · {result.Confidence}%\n\n{result.Notes}",
             "OK");
