@@ -368,7 +368,7 @@
 		<Border x:Name="SpreadLayerChip" IsVisible="False" ZIndex="15"
 				BackgroundColor="#F7FFFFFF" Stroke="#E4C6B4" StrokeThickness="1"
 				Padding="12,8" Margin="16,82,16,0"
-				HorizontalOptions="End" VerticalOptions="Start">
+				HorizontalOptions="Start" VerticalOptions="Start">
 			<Border.StrokeShape>
 				<RoundRectangle CornerRadius="14" />
 			</Border.StrokeShape>
