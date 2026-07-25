@@ -10,6 +10,7 @@ public class Incident
     public string AffectedCrop { get; set; } = "";
     public string Status { get; set; } = "OPEN";
     public string Notes { get; set; } = "";
+    public string Treatment { get; set; } = "";
     public string FieldName { get; set; } = "";
     public double SpreadAcres { get; set; }
     public int Confidence { get; set; }
@@ -18,6 +19,7 @@ public class Incident
     public byte[]? Photo { get; set; }
 
     public string DateDisplay => $"{ReportDate:MMM dd, yyyy}";
+
     public string SeverityColor => Severity switch
     {
         "CRITICAL" => "#DC2626",
