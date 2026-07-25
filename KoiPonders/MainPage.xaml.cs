@@ -17,7 +17,6 @@ public partial class MainPage : ContentPage
     private readonly MapViewModel _viewModel;
     private readonly GeometryEditor _geometryEditor = new();
     private readonly GraphicsOverlay _parcelOverlay = new();
-    private readonly GraphicsOverlay _threatOverlay = new();
     private readonly GraphicsOverlay _riskOverlay = new();
     private readonly GraphicsOverlay _incidentOverlay = new();
 
@@ -50,7 +49,6 @@ public partial class MainPage : ContentPage
 
         mapView.GraphicsOverlays ??= new GraphicsOverlayCollection();
         mapView.GraphicsOverlays.Add(_parcelOverlay);
-        mapView.GraphicsOverlays.Add(_threatOverlay);
         mapView.GraphicsOverlays.Add(_riskOverlay);
         mapView.GraphicsOverlays.Add(_incidentOverlay);
 
@@ -117,7 +115,7 @@ public partial class MainPage : ContentPage
         PanelBackdrop.IsVisible = true;
         ParcelPanel.TranslationX = ParcelPanel.WidthRequest + 32;
         ParcelPanel.IsVisible = true;
-        PanelToggleButton.Text = "×";
+        BottomActionControls.IsVisible = false;
         SemanticProperties.SetDescription(PanelToggleButton, "Close parcels and records");
         await ParcelPanel.TranslateToAsync(0, 0, 220, Easing.CubicOut);
     }
@@ -129,7 +127,7 @@ public partial class MainPage : ContentPage
         await ParcelPanel.TranslateToAsync(ParcelPanel.WidthRequest + 32, 0, 180, Easing.CubicIn);
         ParcelPanel.IsVisible = false;
         PanelBackdrop.IsVisible = false;
-        PanelToggleButton.Text = "☰";
+        BottomActionControls.IsVisible = true;
         SemanticProperties.SetDescription(PanelToggleButton, "Open parcels and records");
     }
     // ---------- startup ----------
@@ -153,6 +151,12 @@ public partial class MainPage : ContentPage
         if (!_loaded)
         {
             _loaded = true;
+
+#if DEBUG
+            FarmStore.Reset();
+            foreach (var report in await _reportStore.GetReportsAsync())
+                await _reportStore.DeleteReportAsync(report.Id);
+#endif
 
             var (parcels, _) = await FarmStore.LoadAsync();
 
@@ -273,13 +277,7 @@ public partial class MainPage : ContentPage
             _geometryEditor.Start(GeometryType.Polygon);
 
         ConfirmButton.IsEnabled = true;
-    }
-
-    private void OnUndoClicked(object sender, EventArgs e)
-    {
-        CloseActionMenu();
-        if (_geometryEditor.CanUndo)
-            _geometryEditor.Undo();
+        ConfirmButton.IsVisible = true;
     }
 
     // ---------- live acreage ----------
@@ -311,6 +309,7 @@ public partial class MainPage : ContentPage
 
         var geometry = _geometryEditor.Stop();
         ConfirmButton.IsEnabled = false;
+        ConfirmButton.IsVisible = false;
         LiveAreaPanel.IsVisible = false;
 
         if (geometry is not Polygon polygon || polygon.IsEmpty ||
@@ -577,21 +576,9 @@ public partial class MainPage : ContentPage
 
     private void RunRiskAnalysis()
     {
-        _threatOverlay.Graphics.Clear();
         _riskOverlay.Graphics.Clear();
 
         var result = RiskEngine.Analyze(_incidents, _parcels);
-
-        if (result.ThreatZone is not null)
-        {
-            var zoneSymbol = new SimpleFillSymbol(
-                SimpleFillSymbolStyle.Solid,
-                Color.FromArgb(45, 245, 158, 11),
-                new SimpleLineSymbol(SimpleLineSymbolStyle.Dash,
-                                     Color.FromArgb(200, 245, 158, 11), 2));
-
-            _threatOverlay.Graphics.Add(new Graphic(result.ThreatZone, zoneSymbol));
-        }
 
         var riskSymbol = new SimpleFillSymbol(
             SimpleFillSymbolStyle.Solid,
@@ -633,7 +620,6 @@ public partial class MainPage : ContentPage
         _incidents.Clear();
         _incidentOverlay.Graphics.Clear();
         _incidentGraphics.Clear();
-        _threatOverlay.Graphics.Clear();
         _riskOverlay.Graphics.Clear();
         RiskList.ItemsSource = null;
         ThreatPanel.IsVisible = false;
