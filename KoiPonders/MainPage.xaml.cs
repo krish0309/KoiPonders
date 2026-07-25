@@ -28,7 +28,7 @@ public partial class MainPage : ContentPage
     private readonly Dictionary<Graphic, Incident> _incidentGraphics = new();
     private readonly Dictionary<Graphic, Parcel> _parcelGraphics = new();
 
-    private readonly IReportStore _reportStore;
+    private readonly IReportStore? _reportStore;
 
     private bool _awaitingIncidentTap;
     private bool _loaded;
@@ -64,69 +64,74 @@ public partial class MainPage : ContentPage
         SizeChanged += OnPageSizeChanged;
     }
 
-    // ---------- responsive layout ----------
-
     private void OnPageSizeChanged(object? sender, EventArgs e)
     {
-        var usePhoneLayout = Width > 0 && Width < 700;
+        if (Width <= 0) return;
 
-        if (DeviceInfo.Platform == DevicePlatform.WinUI)
-        {
-            MapPanel.RowDefinitions =
-            [
-                new RowDefinition(GridLength.Auto),
-                new RowDefinition(GridLength.Star)
-            ];
-            Microsoft.Maui.Controls.Grid.SetRow(ToolbarScroll, 0);
-            Microsoft.Maui.Controls.Grid.SetRow(mapView, 1);
-            Microsoft.Maui.Controls.Grid.SetRow(LiveAreaPanel, 1);
-            Microsoft.Maui.Controls.Grid.SetRow(StatusPanel, 1);
-            Microsoft.Maui.Controls.Grid.SetRow(ThreatPanel, 1);
-            ToolbarScroll.Margin = new Thickness(0, 0, 0, 8);
-        }
-        else
-        {
-            MapPanel.RowDefinitions = [new RowDefinition(GridLength.Star)];
-            Microsoft.Maui.Controls.Grid.SetRow(ToolbarScroll, 0);
-            Microsoft.Maui.Controls.Grid.SetRow(mapView, 0);
-            Microsoft.Maui.Controls.Grid.SetRow(LiveAreaPanel, 0);
-            Microsoft.Maui.Controls.Grid.SetRow(StatusPanel, 0);
-            Microsoft.Maui.Controls.Grid.SetRow(ThreatPanel, 0);
-            ToolbarScroll.Margin = new Thickness(12);
-        }
+        var useCompactLayout = Width < 700;
+        ParcelPanel.WidthRequest = useCompactLayout ? Math.Max(280, Width - 24) : 380;
+        ParcelPanel.Margin = useCompactLayout
+            ? new Thickness(12, 12, 12, 92)
+            : new Thickness(16);
 
-        if (usePhoneLayout)
-        {
-            RootGrid.ColumnDefinitions = [new ColumnDefinition(GridLength.Star)];
-            RootGrid.RowDefinitions =
-            [
-                new RowDefinition(new GridLength(3, GridUnitType.Star)),
-                new RowDefinition(new GridLength(2, GridUnitType.Star))
-            ];
-            Microsoft.Maui.Controls.Grid.SetColumn(MapPanel, 0);
-            Microsoft.Maui.Controls.Grid.SetRow(MapPanel, 0);
-            Microsoft.Maui.Controls.Grid.SetColumn(ParcelPanel, 0);
-            Microsoft.Maui.Controls.Grid.SetRow(ParcelPanel, 1);
-            MapPanel.Margin = new Thickness(8, 8, 8, 0);
-            ParcelPanel.Padding = new Thickness(12, 10);
-        }
-        else
-        {
-            RootGrid.ColumnDefinitions =
-            [
-                new ColumnDefinition(GridLength.Star),
-                new ColumnDefinition(new GridLength(340))
-            ];
-            RootGrid.RowDefinitions = [new RowDefinition(GridLength.Star)];
-            Microsoft.Maui.Controls.Grid.SetColumn(MapPanel, 0);
-            Microsoft.Maui.Controls.Grid.SetRow(MapPanel, 0);
-            Microsoft.Maui.Controls.Grid.SetColumn(ParcelPanel, 1);
-            Microsoft.Maui.Controls.Grid.SetRow(ParcelPanel, 0);
-            MapPanel.Margin = new Thickness(16);
-            ParcelPanel.Padding = new Thickness(20, 24);
-        }
+        ThreatPanel.WidthRequest = useCompactLayout ? Math.Max(260, Width - 32) : 310;
     }
 
+    private async void OnToggleActionMenu(object? sender, EventArgs e)
+    {
+        if (ParcelPanel.IsVisible)
+            await HideWorkspacePanelAsync();
+
+        var showMenu = !ActionMenu.IsVisible;
+        ActionMenu.IsVisible = showMenu;
+        ActionMenuBackdrop.IsVisible = showMenu;
+        ActionMenuButton.Text = showMenu ? "×" : "＋";
+        SemanticProperties.SetDescription(ActionMenuButton, showMenu ? "Close map actions" : "Open map actions");
+    }
+
+    private void CloseActionMenu()
+    {
+        ActionMenu.IsVisible = false;
+        ActionMenuBackdrop.IsVisible = false;
+        ActionMenuButton.Text = "＋";
+        SemanticProperties.SetDescription(ActionMenuButton, "Open map actions");
+    }
+
+    private async void OnTogglePanelClicked(object sender, EventArgs e)
+    {
+        CloseActionMenu();
+
+        if (ParcelPanel.IsVisible)
+            await HideWorkspacePanelAsync();
+        else
+            await ShowWorkspacePanelAsync();
+    }
+
+    private async void OnClosePanelClicked(object? sender, EventArgs e)
+    {
+        await HideWorkspacePanelAsync();
+    }
+
+    private async Task ShowWorkspacePanelAsync()
+    {
+        PanelBackdrop.IsVisible = true;
+        ParcelPanel.TranslationX = ParcelPanel.WidthRequest + 32;
+        ParcelPanel.IsVisible = true;
+        PanelToggleButton.Text = "×";
+        SemanticProperties.SetDescription(PanelToggleButton, "Close parcels and records");
+        await ParcelPanel.TranslateToAsync(0, 0, 220, Easing.CubicOut);
+    }
+
+    private async Task HideWorkspacePanelAsync()
+    {
+        if (!ParcelPanel.IsVisible) return;
+
+        await ParcelPanel.TranslateToAsync(ParcelPanel.WidthRequest + 32, 0, 180, Easing.CubicIn);
+        ParcelPanel.IsVisible = false;
+        PanelBackdrop.IsVisible = false;
+        PanelToggleButton.Text = "☰";
+        SemanticProperties.SetDescription(PanelToggleButton, "Open parcels and records");
+    }
     // ---------- startup ----------
 
     protected override async void OnAppearing()
@@ -135,9 +140,9 @@ public partial class MainPage : ContentPage
 
         try
         {
-            StatusLabel.Text = "Loading local farm imagery�";
+            StatusLabel.Text = "Loading local farm imagery…";
             await _viewModel.InitializeAsync();
-            StatusLabel.Text = "WGS84 � EPSG:3857";
+            StatusLabel.Text = "WGS84 • EPSG:3857";
         }
         catch (Exception ex)
         {
@@ -172,7 +177,7 @@ public partial class MainPage : ContentPage
                     _parcelOverlay.Graphics.Add(new Graphic(extent.GetCenter(), label));
             }
 
-            ParcelCountLabel.Text = $"{_parcels.Count} Total";
+            ParcelCountLabel.Text = $"{_parcels.Count} total";
 
             if (_parcels.FirstOrDefault()?.Geometry is { } geometry)
                 await mapView.SetViewpointGeometryAsync(geometry, 120);
@@ -228,7 +233,7 @@ public partial class MainPage : ContentPage
         RunRiskAnalysis();
 
         if (RecordsContainer.IsVisible)
-            ParcelCountLabel.Text = $"{_incidents.Count} Total";
+            ParcelCountLabel.Text = $"{_incidents.Count} total";
     }
 
     private static string MapSeverity(Models.Severity severity) => severity switch
@@ -250,12 +255,14 @@ public partial class MainPage : ContentPage
 
     private void OnPolygonToolClicked(object sender, EventArgs e)
     {
+        CloseActionMenu();
         _geometryEditor.Tool = new VertexTool();
         StartDrawing();
     }
 
     private void OnFreehandToolClicked(object sender, EventArgs e)
     {
+        CloseActionMenu();
         _geometryEditor.Tool = new FreehandTool();
         StartDrawing();
     }
@@ -270,6 +277,7 @@ public partial class MainPage : ContentPage
 
     private void OnUndoClicked(object sender, EventArgs e)
     {
+        CloseActionMenu();
         if (_geometryEditor.CanUndo)
             _geometryEditor.Undo();
     }
@@ -298,6 +306,7 @@ public partial class MainPage : ContentPage
 
     private async void OnConfirmClicked(object sender, EventArgs e)
     {
+        CloseActionMenu();
         if (!_geometryEditor.IsStarted) return;
 
         var geometry = _geometryEditor.Stop();
@@ -347,9 +356,9 @@ public partial class MainPage : ContentPage
         _parcelGraphics[parcelGraphic] = parcel;
         _parcels.Insert(0, parcel);
 
-        ParcelCountLabel.Text = $"{_parcels.Count} Total";
+        ParcelCountLabel.Text = $"{_parcels.Count} total";
 
-        // Boundaries changed � recompute exposure.
+        // Boundaries changed — recompute exposure.
         if (_incidents.Count > 0) RunRiskAnalysis();
         await FarmStore.SaveAsync(_parcels, _incidents);
     }
@@ -366,6 +375,7 @@ public partial class MainPage : ContentPage
 
     private void OnReportIncidentClicked(object sender, EventArgs e)
     {
+        CloseActionMenu();
         if (_geometryEditor.IsStarted) _geometryEditor.Stop();
 
         _awaitingIncidentTap = true;
@@ -377,28 +387,27 @@ public partial class MainPage : ContentPage
     {
         if (!_awaitingIncidentTap || e.Location is null)
         {
-            // Not placing a new report: treat the tap as an inspect gesture and
-            // surface a digestible summary of whatever feature was tapped.
             await ShowFeatureDetailsAsync(e.Position);
             return;
         }
 
         _awaitingIncidentTap = false;
-        StatusLabel.Text = "WGS84 � EPSG:3857";
+        StatusLabel.Text = "WGS84 • EPSG:3857";
 
-        // The report is still initiated by tapping the map. Instead of uploading a photo
-        // for AI classification, we now open the report form (ported from the kyle branch)
-        // where the user enters the details by hand.
-        var wgs84 = e.Location.SpatialReference is { Wkid: 4326 }
-            ? e.Location
-            : GeometryEngine.Project(e.Location, SpatialReferences.Wgs84) as MapPoint;
-        if (wgs84 is null) return;
+        var page = new IncidentReportPage(e.Location);
+        await Navigation.PushModalAsync(new NavigationPage(page));
+        var incident = await page.Result;
+        if (incident is null) return;
 
-        var route = $"{nameof(Views.ReportEditPage)}" +
-            $"?lat={wgs84.Y.ToString(CultureInfo.InvariantCulture)}" +
-            $"&lon={wgs84.X.ToString(CultureInfo.InvariantCulture)}";
+        incident.FieldName = FieldNameAt(e.Location);
+        _incidents.Add(incident);
+        DrawIncident(incident);
+        RunRiskAnalysis();
 
-        await Shell.Current.GoToAsync(route);
+        if (RecordsContainer.IsVisible)
+            ParcelCountLabel.Text = $"{_incidents.Count} total";
+
+        await FarmStore.SaveAsync(_parcels, _incidents);
     }
 
     // Identifies the tapped graphic (incident pins take priority over parcels) and
@@ -463,31 +472,6 @@ public partial class MainPage : ContentPage
         await DisplayAlertAsync(parcel.Name, details, "Close");
     }
 
-    // Rebuilds the incident pins and risk analysis from the saved reports so that the
-    // existing FarmGuard threat-assessment logic keeps working with form-entered reports.
-    private async Task ReloadReportsAsync()
-    {
-        var reports = await _reportStore.GetReportsAsync();
-
-        _incidents.Clear();
-        _incidentOverlay.Graphics.Clear();
-        _incidentGraphics.Clear();
-
-        var incident = await page.Result;
-        if (incident is null) return;
-
-        incident.FieldName = FieldNameAt(e.Location);
-
-        _incidents.Add(incident);
-        DrawIncident(incident);
-        RunRiskAnalysis();
-
-        if (RecordsContainer.IsVisible)
-            ParcelCountLabel.Text = $"{_incidents.Count} Total";
-
-        await FarmStore.SaveAsync(_parcels, _incidents);
-    }
-
     private void DrawIncident(Incident inc)
     {
         if (inc.Location is null) return;
@@ -545,7 +529,7 @@ public partial class MainPage : ContentPage
         double exposed = result.AtRisk.Sum(r => r.Parcel.Acres);
         ThreatSummaryLabel.Text =
             $"{_incidents.Count} active incident(s). " +
-            $"{result.AtRisk.Count} neighboring field(s) within spread radius � " +
+            $"{result.AtRisk.Count} neighboring field(s) within spread radius — " +
             $"{exposed:F1} acres exposed.";
 
         ThreatPanel.IsVisible = result.AtRisk.Count > 0 || result.Infected.Count > 0;
@@ -576,7 +560,7 @@ public partial class MainPage : ContentPage
         ThreatPanel.IsVisible = false;
 
         if (RecordsContainer.IsVisible)
-            ParcelCountLabel.Text = "0 Total";
+            ParcelCountLabel.Text = "0 total";
 
         await FarmStore.SaveAsync(_parcels, _incidents);
     }
@@ -587,11 +571,11 @@ public partial class MainPage : ContentPage
     {
         ParcelList.IsVisible = true;
         RecordsContainer.IsVisible = false;
-        PanelTitleLabel.Text = "Mapped Parcels";
-        ParcelCountLabel.Text = $"{_parcels.Count} Total";
+        PanelTitleLabel.Text = "Mapped parcels";
+        ParcelCountLabel.Text = $"{_parcels.Count} total";
         AddBoundaryButton.IsVisible = true;
 
-        ParcelsTabButton.BackgroundColor = MauiColor.FromArgb("#15803D");
+        ParcelsTabButton.BackgroundColor = MauiColor.FromArgb("#2E7D32");
         ParcelsTabButton.TextColor = Colors.White;
         RecordsTabButton.BackgroundColor = MauiColor.FromArgb("#DDE8F0");
         RecordsTabButton.TextColor = MauiColor.FromArgb("#5A6E77");
@@ -601,11 +585,11 @@ public partial class MainPage : ContentPage
     {
         ParcelList.IsVisible = false;
         RecordsContainer.IsVisible = true;
-        PanelTitleLabel.Text = "Records & Log";
-        ParcelCountLabel.Text = $"{_incidents.Count} Total";
+        PanelTitleLabel.Text = "Records & log";
+        ParcelCountLabel.Text = $"{_incidents.Count} total";
         AddBoundaryButton.IsVisible = false;
 
-        RecordsTabButton.BackgroundColor = MauiColor.FromArgb("#15803D");
+        RecordsTabButton.BackgroundColor = MauiColor.FromArgb("#2E7D32");
         RecordsTabButton.TextColor = Colors.White;
         ParcelsTabButton.BackgroundColor = MauiColor.FromArgb("#DDE8F0");
         ParcelsTabButton.TextColor = MauiColor.FromArgb("#5A6E77");
@@ -632,7 +616,7 @@ public partial class MainPage : ContentPage
         }
 
         SummaryButton.IsEnabled = false;
-        AiSummaryLabel.Text = "Analyzing incident history�";
+        AiSummaryLabel.Text = "Analyzing incident history…";
 
         AiSummaryLabel.Text = await PestClassifier.SummarizeAsync(_incidents);
 
@@ -643,6 +627,7 @@ public partial class MainPage : ContentPage
 
     private async void OnTestAiClicked(object sender, EventArgs e)
     {
+        CloseActionMenu();
         var photo = await FilePicker.Default.PickAsync(new PickOptions
         {
             FileTypes = FilePickerFileType.Images,
@@ -657,8 +642,8 @@ public partial class MainPage : ContentPage
         var result = await PestClassifier.ClassifyAsync(ms.ToArray());
 
         await DisplayAlertAsync("Result",
-            result is null ? "Failed � check Output window"
-                           : $"{result.PestName}\n{result.Severity} � {result.Confidence}%\n\n{result.Notes}",
+            result is null ? "Failed — check Output window"
+                           : $"{result.PestName}\n{result.Severity} • {result.Confidence}%\n\n{result.Notes}",
             "OK");
     }
 }

@@ -1,261 +1,291 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:esri="http://schemas.esri.com/arcgis/runtime/2013"
              xmlns:local="clr-namespace:KoiPonders"
              x:Class="KoiPonders.MainPage"
-             x:DataType="local:MapViewModel">
+             x:DataType="local:MapViewModel"
+             Shell.NavBarIsVisible="False">
 
-    <Grid x:Name="RootGrid"
-          ColumnDefinitions="*,340"
-          RowDefinitions="*"
-          BackgroundColor="#E8F2FA">
+    <ContentPage.Resources>
+        <Style x:Key="OverlayCardStyle" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="#F7FFFFFF" />
+            <Setter Property="Stroke" Value="#D8E4DC" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="Shadow">
+                <Setter.Value>
+                    <Shadow Brush="#330F2A1D" Offset="0,6" Radius="18" Opacity="0.28" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="#FAFFFFFF" />
+            <Setter Property="TextColor" Value="#173F2B" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="HeightRequest" Value="48" />
+            <Setter Property="CornerRadius" Value="24" />
+            <Setter Property="Padding" Value="18,0" />
+            <Setter Property="HorizontalOptions" Value="End" />
+        </Style>
+    </ContentPage.Resources>
 
-        <!-- ============ MAP ============ -->
-        <Grid x:Name="MapPanel" Grid.Column="0" Margin="16">
+    <Grid x:Name="RootGrid" BackgroundColor="#DCE9E1">
+        <Grid x:Name="MapPanel">
             <esri:MapView x:Name="mapView" Map="{Binding Map}" />
 
-            <!-- drawing toolbar -->
-            <ScrollView x:Name="ToolbarScroll"
-                        Orientation="Horizontal"
-                        Margin="12"
-                        HorizontalOptions="Fill"
-                        VerticalOptions="Start"
-                        ZIndex="10">
-                <ScrollView.HorizontalScrollBarVisibility>
-                    <OnPlatform x:TypeArguments="ScrollBarVisibility" Default="Never">
-                        <On Platform="WinUI" Value="Always" />
-                    </OnPlatform>
-                </ScrollView.HorizontalScrollBarVisibility>
-                <HorizontalStackLayout Spacing="8">
-                <Button x:Name="PolygonToolButton" Text="Polygon Tool"
-                        Clicked="OnPolygonToolClicked"
-                        BackgroundColor="#15803D" TextColor="White"
-                        FontSize="13" Padding="14,0" HeightRequest="38" CornerRadius="6" />
-                <Button x:Name="FreehandToolButton" Text="Freehand Draw"
-                        Clicked="OnFreehandToolClicked"
-                        BackgroundColor="#1E3A2F" TextColor="#B8CFC4"
-                        FontSize="13" Padding="14,0" HeightRequest="38" CornerRadius="6" />
-                <Button Text="↺" Clicked="OnUndoClicked"
-                        BackgroundColor="#1E3A2F" TextColor="White"
-                        FontSize="15" WidthRequest="42" HeightRequest="38" CornerRadius="6" />
-                <Button x:Name="ConfirmButton" Text="Confirm Boundary"
-                        Clicked="OnConfirmClicked" IsEnabled="False"
-                        BackgroundColor="#16A34A" TextColor="White"
-                        FontSize="13" Padding="14,0" HeightRequest="38" CornerRadius="6" />
-                <Button Text="Test AI" Clicked="OnTestAiClicked"
-                        BackgroundColor="#7C3AED" TextColor="White"
-                        FontSize="13" Padding="14,0" HeightRequest="38" CornerRadius="6" />
-                <Button x:Name="ReportButton" Text="Report Incident"
-                        Clicked="OnReportIncidentClicked"
-                        BackgroundColor="#B91C1C" TextColor="White"
-                        FontSize="13" Padding="14,0" HeightRequest="38" CornerRadius="6" />
-                </HorizontalStackLayout>
-            </ScrollView>
-
-            <!-- live acreage while drawing -->
-            <Border x:Name="LiveAreaPanel" IsVisible="False"
-                    BackgroundColor="#E616A34A" Stroke="Transparent"
-                    Padding="14,8" Margin="12,60,0,0"
+            <!-- Compact map identity keeps context without competing with the map. -->
+            <Border Style="{StaticResource OverlayCardStyle}"
+                    Margin="16" Padding="14,10"
                     HorizontalOptions="Start" VerticalOptions="Start">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="6" />
+                    <RoundRectangle CornerRadius="14" />
                 </Border.StrokeShape>
-                <Label x:Name="LiveAreaLabel" TextColor="White"
-                       FontSize="14" FontAttributes="Bold" />
+                <HorizontalStackLayout Spacing="10">
+                    <Border BackgroundColor="#2E7D32" Stroke="Transparent"
+                            WidthRequest="34" HeightRequest="34" Padding="0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+                        <Label Text="⌖" TextColor="White" FontSize="20"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Spacing="0" VerticalOptions="Center">
+                        <Label Text="FarmAssist" FontSize="15" FontAttributes="Bold" FontFamily="SpaceGrotesk" TextColor="#2E4735" />
+                        <Label Text="Field intelligence map" FontSize="10" TextColor="#63776C" />
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
             </Border>
 
-            <!-- coordinate readout -->
+            <Border x:Name="LiveAreaPanel" IsVisible="False"
+                    BackgroundColor="#E615803D" Stroke="Transparent"
+                    Padding="14,8" Margin="16,82,0,0"
+                    HorizontalOptions="Start" VerticalOptions="Start">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+                <Label x:Name="LiveAreaLabel" TextColor="White"
+                       FontSize="14" FontAttributes="Bold" FontFamily="SpaceGrotesk" />
+            </Border>
+
             <Border x:Name="StatusPanel"
-                    BackgroundColor="#CC132A20" Stroke="Transparent"
-                    Padding="12,6" Margin="12"
+                    BackgroundColor="#E6132A20" Stroke="Transparent"
+                    Padding="12,7" Margin="16"
                     HorizontalOptions="Start" VerticalOptions="End">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="6" />
+                    <RoundRectangle CornerRadius="12" />
                 </Border.StrokeShape>
                 <Label x:Name="StatusLabel" Text="WGS84 • EPSG:3857"
                        TextColor="White" FontSize="11" />
             </Border>
 
-            <!-- ===== THREAT ASSESSMENT ===== -->
             <Border x:Name="ThreatPanel" IsVisible="False"
-                    BackgroundColor="#F2FFFFFF" Stroke="#F59E0B" StrokeThickness="2"
-                    Padding="16,12" Margin="12,62,12,12" WidthRequest="290"
+                    Style="{StaticResource OverlayCardStyle}"
+                    Stroke="#F59E0B" StrokeThickness="2"
+                    Padding="16,12" Margin="16,82,16,16" WidthRequest="310"
                     HorizontalOptions="End" VerticalOptions="Start">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="8" />
+                    <RoundRectangle CornerRadius="16" />
                 </Border.StrokeShape>
-                <VerticalStackLayout Spacing="8">
-
+                <VerticalStackLayout Spacing="9">
                     <Grid ColumnDefinitions="*,Auto">
-                        <Label Text="⚠  Threat Assessment" FontSize="14"
-                               FontAttributes="Bold" TextColor="#92400E"
+                        <Label Text="⚠  Threat assessment" FontSize="14"
+                               FontAttributes="Bold" FontFamily="SpaceGrotesk" TextColor="#92400E"
                                VerticalOptions="Center" />
-                        <Button Grid.Column="1" Text="✕"
-                                Clicked="OnCloseThreatPanel"
+                        <Button Grid.Column="1" Text="✕" Clicked="OnCloseThreatPanel"
                                 BackgroundColor="Transparent" TextColor="#92400E"
-                                FontSize="14" WidthRequest="30" HeightRequest="30"
-                                Padding="0" />
+                                FontSize="14" WidthRequest="38" HeightRequest="38" Padding="0"
+                                SemanticProperties.Description="Close threat assessment" />
                     </Grid>
-
                     <Label x:Name="ThreatSummaryLabel" FontSize="12"
                            TextColor="#57534E" LineHeight="1.4" />
-
                     <CollectionView x:Name="RiskList" HeightRequest="150">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="local:RiskAssessment">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="0,4">
-                                    <BoxView Grid.Column="0" WidthRequest="4" CornerRadius="2"
-                                             Color="#F59E0B" />
+                                    <BoxView WidthRequest="4" CornerRadius="2" Color="#F59E0B" />
                                     <VerticalStackLayout Grid.Column="1">
                                         <Label Text="{Binding Parcel.Name}" FontSize="12"
-                                               FontAttributes="Bold" TextColor="#1C1917" />
-                                        <Label Text="{Binding RiskDetail}" FontSize="10"
-                                               TextColor="#78716C" />
+                                               FontAttributes="Bold" FontFamily="SpaceGrotesk" TextColor="#1C1917" />
+                                        <Label Text="{Binding RiskDetail}" FontSize="10" TextColor="#78716C" />
                                     </VerticalStackLayout>
                                 </Grid>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
-
-                    <Button Text="Clear All Incidents"
-                            Clicked="OnClearIncidents"
+                    <Button Text="Clear all incidents" Clicked="OnClearIncidents"
                             BackgroundColor="#FEF3C7" TextColor="#92400E"
-                            FontSize="11" HeightRequest="32" CornerRadius="6" />
+                            FontSize="11" HeightRequest="38" CornerRadius="10" />
                 </VerticalStackLayout>
             </Border>
-
         </Grid>
 
-        <!-- ============ PARCEL PANEL ============ -->
-        <!-- ============ PARCEL PANEL ============ -->
-        <Grid x:Name="ParcelPanel"
-              Grid.Column="1"
-              RowDefinitions="Auto,Auto,*,Auto"
-              Padding="20,24" RowSpacing="14">
+        <!-- Tapping outside either overlay dismisses it. -->
+        <BoxView x:Name="PanelBackdrop" IsVisible="False" ZIndex="20" Color="#520B1F15">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnClosePanelClicked" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
 
-            <!-- tab switcher -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,*" ColumnSpacing="8">
-                <Button x:Name="ParcelsTabButton" Text="Parcels"
-                        Clicked="OnShowParcels"
-                        BackgroundColor="#15803D" TextColor="White"
-                        FontSize="13" HeightRequest="38" CornerRadius="6" />
-                <Button x:Name="RecordsTabButton" Grid.Column="1" Text="Records"
-                        Clicked="OnShowRecords"
-                        BackgroundColor="#DDE8F0" TextColor="#5A6E77"
-                        FontSize="13" HeightRequest="38" CornerRadius="6" />
-            </Grid>
+        <!-- Parcels and records now live in a responsive slide-over drawer. -->
+        <Border x:Name="ParcelPanel" IsVisible="False" ZIndex="30"
+                Style="{StaticResource OverlayCardStyle}"
+                WidthRequest="380" Margin="16" Padding="18"
+                HorizontalOptions="End" VerticalOptions="Fill">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="22" />
+            </Border.StrokeShape>
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14">
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Field workspace" FontSize="20" FontAttributes="Bold" FontFamily="SpaceGrotesk" TextColor="#2E4735" />
+                        <Label Text="Review boundaries and incident history" FontSize="11" TextColor="#718078" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1" Text="✕" Clicked="OnClosePanelClicked"
+                            BackgroundColor="#EDF3EF" TextColor="#315440"
+                            WidthRequest="42" HeightRequest="42" Padding="0" CornerRadius="21"
+                            SemanticProperties.Description="Close field workspace" />
+                </Grid>
 
-            <!-- header -->
-            <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
-                <Label x:Name="PanelTitleLabel" Text="Mapped Parcels"
-                       FontSize="17" FontAttributes="Bold" TextColor="#0F2A1D"
-                       VerticalOptions="Center" />
-                <Label x:Name="ParcelCountLabel" Grid.Column="1"
-                       Text="0 Total" FontSize="12" TextColor="#6B7F76"
-                       VerticalOptions="Center" />
-            </Grid>
+                <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="12">
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button x:Name="ParcelsTabButton" Text="Parcels" Clicked="OnShowParcels"
+                                BackgroundColor="#2E7D32" TextColor="White"
+                                FontSize="13" HeightRequest="42" CornerRadius="12" />
+                        <Button x:Name="RecordsTabButton" Grid.Column="1" Text="Records" Clicked="OnShowRecords"
+                                BackgroundColor="#E8F0EB" TextColor="#5A6E77"
+                                FontSize="13" HeightRequest="42" CornerRadius="12" />
+                    </Grid>
+                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                        <Label x:Name="PanelTitleLabel" Text="Mapped parcels"
+                               FontSize="15" FontAttributes="Bold" FontFamily="SpaceGrotesk" TextColor="#2E4735" />
+                        <Label x:Name="ParcelCountLabel" Grid.Column="1" Text="0 total"
+                               FontSize="12" TextColor="#6B7F76" VerticalOptions="Center" />
+                    </Grid>
+                </Grid>
 
-            <!-- PARCELS -->
-            <CollectionView x:Name="ParcelList" Grid.Row="2"
-                            SelectionMode="Single"
-                            SelectionChanged="OnParcelSelected">
-                <CollectionView.ItemsLayout>
-                    <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
-                </CollectionView.ItemsLayout>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="local:Parcel">
-                        <Border BackgroundColor="White" Stroke="#D9E6EF"
-                                StrokeThickness="1" Padding="14,12">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                                <Label Text="📍" FontSize="15" VerticalOptions="Center" />
-                                <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                    <Label Text="{Binding Name}" FontSize="14"
-                                           FontAttributes="Bold" TextColor="#0F2A1D" />
-                                    <Label Text="{Binding MappedDisplay}"
-                                           FontSize="11" TextColor="#8496A0" />
-                                </VerticalStackLayout>
-                                <Label Grid.Column="2" Text="{Binding AcresDisplay}"
-                                       FontSize="14" FontAttributes="Bold"
-                                       TextColor="#15803D" VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-
-            <!-- RECORDS -->
-            <Grid x:Name="RecordsContainer" Grid.Row="2" IsVisible="False"
-                  RowDefinitions="*,Auto" RowSpacing="10">
-
-                <CollectionView x:Name="IncidentList" Grid.Row="0"
-                                SelectionMode="Single"
-                                SelectionChanged="OnIncidentSelected">
+                <CollectionView x:Name="ParcelList" Grid.Row="2"
+                                SelectionMode="Single" SelectionChanged="OnParcelSelected">
                     <CollectionView.ItemsLayout>
                         <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="local:Incident">
-                            <Border BackgroundColor="White" Stroke="#D9E6EF"
-                                    StrokeThickness="1" Padding="14,12">
+                        <DataTemplate x:DataType="local:Parcel">
+                            <Border BackgroundColor="#F8FBF9" Stroke="#D9E6DF" StrokeThickness="1" Padding="14,12">
                                 <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="8" />
+                                    <RoundRectangle CornerRadius="14" />
                                 </Border.StrokeShape>
-                                <VerticalStackLayout Spacing="6">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <Label Text="{Binding PestName}" FontSize="14"
-                                               FontAttributes="Bold" TextColor="#0F2A1D" />
-                                        <Border Grid.Column="1"
-                                                BackgroundColor="{Binding SeverityColor}"
-                                                Stroke="Transparent" Padding="8,2">
-                                            <Border.StrokeShape>
-                                                <RoundRectangle CornerRadius="4" />
-                                            </Border.StrokeShape>
-                                            <Label Text="{Binding Severity}" FontSize="9"
-                                                   FontAttributes="Bold" TextColor="White" />
-                                        </Border>
-                                    </Grid>
-                                    <Label Text="{Binding Classification}"
-                                           FontSize="11" TextColor="#5A6E77" />
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <Label Text="{Binding FieldName}"
-                                               FontSize="11" TextColor="#8496A0" />
-                                        <Label Grid.Column="1" Text="{Binding DateDisplay}"
-                                               FontSize="11" TextColor="#8496A0" />
-                                    </Grid>
-                                </VerticalStackLayout>
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                    <Label Text="⌖" FontSize="17" TextColor="#2E7D32" VerticalOptions="Center" />
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="{Binding Name}" FontSize="14" FontAttributes="Bold" FontFamily="SpaceGrotesk" TextColor="#2E4735" />
+                                        <Label Text="{Binding MappedDisplay}" FontSize="11" TextColor="#84968C" />
+                                    </VerticalStackLayout>
+                                    <Label Grid.Column="2" Text="{Binding AcresDisplay}" FontSize="14"
+                                           FontAttributes="Bold" FontFamily="SpaceGrotesk" TextColor="#2E7D32" VerticalOptions="Center" />
+                                </Grid>
                             </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                <!-- AI overview -->
-                <Border Grid.Row="1" BackgroundColor="#F0F7F3" Stroke="#C5DED0"
-                        StrokeThickness="1" Padding="14,12">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="8" />
-                    </Border.StrokeShape>
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="AI Outbreak Insights" FontSize="13"
-                               FontAttributes="Bold" TextColor="#15803D" />
-                        <Label x:Name="AiSummaryLabel"
-                               Text="Generate a summary of all logged incidents."
-                               FontSize="11" TextColor="#4A5D54" LineHeight="1.4" />
-                        <Button x:Name="SummaryButton" Text="Generate Summary"
-                                Clicked="OnGenerateSummary"
-                                BackgroundColor="#15803D" TextColor="White"
-                                FontSize="12" HeightRequest="36" CornerRadius="6" />
-                    </VerticalStackLayout>
-                </Border>
-            </Grid>
+                <Grid x:Name="RecordsContainer" Grid.Row="2" IsVisible="False"
+                      RowDefinitions="*,Auto" RowSpacing="10">
+                    <CollectionView x:Name="IncidentList" SelectionMode="Single" SelectionChanged="OnIncidentSelected">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="local:Incident">
+                                <Border BackgroundColor="#F8FBF9" Stroke="#D9E6DF" StrokeThickness="1" Padding="14,12">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="14" />
+                                    </Border.StrokeShape>
+                                    <VerticalStackLayout Spacing="6">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Label Text="{Binding PestName}" FontSize="14" FontAttributes="Bold" FontFamily="SpaceGrotesk" TextColor="#2E4735" />
+                                            <Border Grid.Column="1" BackgroundColor="{Binding SeverityColor}" Stroke="Transparent" Padding="8,2">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="6" />
+                                                </Border.StrokeShape>
+                                                <Label Text="{Binding Severity}" FontSize="9" FontAttributes="Bold" FontFamily="SpaceGrotesk" TextColor="White" />
+                                            </Border>
+                                        </Grid>
+                                        <Label Text="{Binding Classification}" FontSize="11" TextColor="#5A6E77" />
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Label Text="{Binding FieldName}" FontSize="11" TextColor="#84968C" />
+                                            <Label Grid.Column="1" Text="{Binding DateDisplay}" FontSize="11" TextColor="#84968C" />
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
 
-            <Button x:Name="AddBoundaryButton" Grid.Row="3" Text="+  Add New Boundary"
-                    Clicked="OnPolygonToolClicked"
-                    BackgroundColor="#15803D" TextColor="White"
-                    FontSize="15" HeightRequest="52" CornerRadius="8" />
-        </Grid>
+                    <Border Grid.Row="1" BackgroundColor="#E8F5E9" Stroke="#A5D6A7" StrokeThickness="1" Padding="14,12">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="14" />
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="AI outbreak insights" FontSize="13" FontAttributes="Bold" FontFamily="SpaceGrotesk" TextColor="#2E7D32" />
+                            <Label x:Name="AiSummaryLabel" Text="Generate a summary of all logged incidents."
+                                   FontSize="11" TextColor="#4A5D54" LineHeight="1.4" />
+                            <Button x:Name="SummaryButton" Text="Generate summary" Clicked="OnGenerateSummary"
+                                    BackgroundColor="#2E7D32" TextColor="White" FontSize="12" HeightRequest="40" CornerRadius="10" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <Button x:Name="AddBoundaryButton" Grid.Row="3" Text="＋  Add new boundary"
+                        Clicked="OnPolygonToolClicked" BackgroundColor="#2E7D32" TextColor="White"
+                        FontSize="14" HeightRequest="48" CornerRadius="14" />
+            </Grid>
+        </Border>
+
+        <BoxView x:Name="ActionMenuBackdrop" IsVisible="False" ZIndex="40" Color="#3D0B1F15">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnToggleActionMenu" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <!-- Speed-dial options expand upward from the primary + action. -->
+        <VerticalStackLayout x:Name="ActionMenu" IsVisible="False" ZIndex="45"
+                             Spacing="9" Margin="0,0,16,94"
+                             HorizontalOptions="End" VerticalOptions="End">
+            <Button x:Name="ConfirmButton" Text="✓   Confirm boundary" Clicked="OnConfirmClicked"
+                    IsEnabled="False" Style="{StaticResource ActionButtonStyle}" />
+            <Button Text="↶   Undo last point" Clicked="OnUndoClicked"
+                    Style="{StaticResource ActionButtonStyle}" />
+            <Button x:Name="FreehandToolButton" Text="✎   Draw freehand" Clicked="OnFreehandToolClicked"
+                    Style="{StaticResource ActionButtonStyle}" />
+            <Button x:Name="PolygonToolButton" Text="⬡   Draw polygon" Clicked="OnPolygonToolClicked"
+                    Style="{StaticResource ActionButtonStyle}" />
+            <Button Text="⌁   Report incident" Clicked="OnReportIncidentClicked"
+                    BackgroundColor="#B91C1C" TextColor="White" FontSize="14" FontAttributes="Bold" FontFamily="SpaceGrotesk"
+                    HeightRequest="48" CornerRadius="24" Padding="18,0" HorizontalOptions="End" />
+            <Button Text="✦   Test AI" Clicked="OnTestAiClicked"
+                    BackgroundColor="#6D4CCF" TextColor="White" FontSize="14" FontAttributes="Bold" FontFamily="SpaceGrotesk"
+                    HeightRequest="48" CornerRadius="24" Padding="18,0" HorizontalOptions="End" />
+        </VerticalStackLayout>
+
+        <HorizontalStackLayout ZIndex="50" Spacing="10" Margin="0,0,16,18"
+                               HorizontalOptions="End" VerticalOptions="End">
+            <Button x:Name="PanelToggleButton" Text="☰" Clicked="OnTogglePanelClicked"
+                    BackgroundColor="White" TextColor="#173F2B"
+                    WidthRequest="58" HeightRequest="58" Padding="0" CornerRadius="29"
+                    FontSize="22" SemanticProperties.Description="Open parcels and records">
+                <Button.Shadow>
+                    <Shadow Brush="#590F2A1D" Offset="0,5" Radius="12" Opacity="0.35" />
+                </Button.Shadow>
+            </Button>
+            <Button x:Name="ActionMenuButton" Text="＋" Clicked="OnToggleActionMenu"
+                    BackgroundColor="#2E7D32" TextColor="White"
+                    WidthRequest="58" HeightRequest="58" Padding="0" CornerRadius="29"
+                    FontSize="30" SemanticProperties.Description="Open map actions">
+                <Button.Shadow>
+                    <Shadow Brush="#6615803D" Offset="0,6" Radius="14" Opacity="0.45" />
+                </Button.Shadow>
+            </Button>
+        </HorizontalStackLayout>
     </Grid>
 </ContentPage>
