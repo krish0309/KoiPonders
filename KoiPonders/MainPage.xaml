@@ -307,10 +307,6 @@
         <VerticalStackLayout x:Name="ActionMenu" IsVisible="False" ZIndex="45"
                              Spacing="9" Margin="0,0,16,94"
                              HorizontalOptions="End" VerticalOptions="End">
-            <Button x:Name="ConfirmButton" Text="✓   Confirm boundary" Clicked="OnConfirmClicked"
-                    IsEnabled="False" Style="{StaticResource ActionButtonStyle}" />
-            <Button Text="↶   Undo last point" Clicked="OnUndoClicked"
-                    Style="{StaticResource ActionButtonStyle}" />
             <Button x:Name="FreehandToolButton" Text="✎   Draw freehand" Clicked="OnFreehandToolClicked"
                     Style="{StaticResource ActionButtonStyle}" />
             <Button x:Name="PolygonToolButton" Text="⬡   Draw polygon" Clicked="OnPolygonToolClicked"
@@ -320,7 +316,12 @@
                     HeightRequest="48" CornerRadius="24" Padding="18,0" HorizontalOptions="End" />
         </VerticalStackLayout>
 
-        <HorizontalStackLayout ZIndex="50" Spacing="10" Margin="0,0,16,18"
+        <Button x:Name="ConfirmButton" Text="✓   Confirm boundary" Clicked="OnConfirmClicked"
+                IsVisible="False" IsEnabled="False" ZIndex="45"
+                Margin="16,0,16,94" HorizontalOptions="Center" VerticalOptions="End"
+                Style="{StaticResource ActionButtonStyle}" />
+
+        <HorizontalStackLayout x:Name="BottomActionControls" ZIndex="50" Spacing="10" Margin="0,0,16,18"
                                HorizontalOptions="End" VerticalOptions="End">
             <Button x:Name="PanelToggleButton" Text="☰" Clicked="OnTogglePanelClicked"
                     BackgroundColor="White" TextColor="#173F2B"
