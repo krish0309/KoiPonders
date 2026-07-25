@@ -13,6 +13,31 @@
     <Color x:Key="SecondaryDarkText">#9880e5</Color>
     <Color x:Key="Tertiary">#2B0B98</Color>
 
+    <!-- ===== FarmGuard brand palette ===== -->
+    <Color x:Key="FgRail">#0E241A</Color>
+    <Color x:Key="FgRailItem">#CFE0D7</Color>
+    <Color x:Key="FgRailMuted">#5E8570</Color>
+    <Color x:Key="FgRailIcon">#9FBBAC</Color>
+    <Color x:Key="FgAccent">#2E9E56</Color>
+    <Color x:Key="FgAccentDark">#1F6B3A</Color>
+    <Color x:Key="FgAccentDeep">#193A28</Color>
+    <Color x:Key="FgBackground">#EAF1EE</Color>
+    <Color x:Key="FgPanel">#DCEAE2</Color>
+    <Color x:Key="FgCard">#FFFFFF</Color>
+    <Color x:Key="FgInk">#12241A</Color>
+    <Color x:Key="FgInkMuted">#6C8A7A</Color>
+    <Color x:Key="FgInkSubtle">#7C948A</Color>
+    <Color x:Key="FgInfo">#2E7DD1</Color>
+    <Color x:Key="FgWarn">#E1A100</Color>
+    <Color x:Key="FgDanger">#B71C1C</Color>
+    <Color x:Key="FgChip">#E3F1E8</Color>
+
+    <SolidColorBrush x:Key="FgRailBrush" Color="{StaticResource FgRail}" />
+    <SolidColorBrush x:Key="FgAccentBrush" Color="{StaticResource FgAccent}" />
+    <SolidColorBrush x:Key="FgBackgroundBrush" Color="{StaticResource FgBackground}" />
+    <SolidColorBrush x:Key="FgCardBrush" Color="{StaticResource FgCard}" />
+    <SolidColorBrush x:Key="FgPanelBrush" Color="{StaticResource FgPanel}" />
+
     <Color x:Key="White">White</Color>
     <Color x:Key="Black">Black</Color>
     <Color x:Key="Magenta">#D600AA</Color>

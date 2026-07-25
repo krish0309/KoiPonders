@@ -5,9 +5,59 @@
              xmlns:local="clr-namespace:KoiPonders"
              x:Class="KoiPonders.MainPage"
              x:DataType="local:MapViewModel"
-             >
+             Title="Farm Map">
 
-    <Grid>
-         <esri:MapView x:Name="mapView" Map="{Binding Map}" />
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Field details entry, shown only while editing -->
+        <VerticalStackLayout Grid.Row="0"
+                             Padding="12,10"
+                             Spacing="6"
+                             BackgroundColor="#F1F8E9"
+                             IsVisible="{Binding IsEditing}">
+            <Label Text="New field" FontAttributes="Bold" FontSize="16" />
+            <Entry Placeholder="Field name (e.g. North Orchard)"
+                   Text="{Binding NewFieldName}" />
+            <Entry Placeholder="Crop / plant type (e.g. Tomatoes)"
+                   Text="{Binding NewFieldCrop}" />
+        </VerticalStackLayout>
+
+        <esri:MapView x:Name="mapView"
+                      Grid.Row="1"
+                      Map="{Binding Map}" />
+
+        <Label Grid.Row="1"
+               VerticalOptions="Start"
+               HorizontalOptions="Fill"
+               Margin="8"
+               Padding="10,6"
+               BackgroundColor="#CC000000"
+               TextColor="White"
+               FontSize="13"
+               Text="{Binding StatusMessage}" />
+
+        <!-- Action bar -->
+        <Grid Grid.Row="2"
+              Padding="8"
+              ColumnSpacing="6"
+              RowSpacing="6"
+              BackgroundColor="#2E7D32">
+
+            <!-- Idle actions -->
+            <HorizontalStackLayout Spacing="6" IsVisible="{Binding IsEditing, Converter={StaticResource InverseBool}}">
+                <Button Text="Draw field" Command="{Binding StartDrawCommand}" />
+                <Button Text="Walk field" Command="{Binding StartGpsCaptureCommand}" />
+            </HorizontalStackLayout>
+
+            <!-- Editing actions -->
+            <HorizontalStackLayout Spacing="6" IsVisible="{Binding IsEditing}">
+                <Button Text="Add point"
+                        Command="{Binding AddGpsPointCommand}"
+                        IsVisible="{Binding IsGpsCapture}" />
+                <Button Text="Undo" Command="{Binding UndoVertexCommand}" />
+                <Button Text="Save" Command="{Binding SaveFieldCommand}" BackgroundColor="#1B5E20" />
+                <Button Text="Cancel" Command="{Binding CancelCommand}" BackgroundColor="#B71C1C" />
+            </HorizontalStackLayout>
+        </Grid>
     </Grid>
 </ContentPage>

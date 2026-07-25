@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:vm="clr-namespace:KoiPonders.ViewModels"
+			 x:Class="KoiPonders.Views.ReportsPage"
+			 x:DataType="vm:ReportsViewModel"
+			 Title="Reports">
+
+	<ContentPage.ToolbarItems>
+		<ToolbarItem Text="New" Command="{Binding NewReportCommand}" />
+	</ContentPage.ToolbarItems>
+
+	<RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+		<CollectionView ItemsSource="{Binding Reports}"
+						SelectionMode="None">
+			<CollectionView.EmptyView>
+				<StackLayout Padding="24" VerticalOptions="Center">
+					<Label Text="No reports yet"
+						   FontSize="18" FontAttributes="Bold"
+						   HorizontalOptions="Center" />
+					<Label Text="Tap 'New' to file a pest or disease report."
+						   HorizontalTextAlignment="Center" TextColor="Gray" />
+				</StackLayout>
+			</CollectionView.EmptyView>
+
+			<CollectionView.ItemTemplate>
+				<DataTemplate x:DataType="vm:ReportListItem">
+					<Border Margin="10,6" Padding="12" StrokeShape="RoundRectangle 10"
+							Stroke="#DDDDDD" BackgroundColor="White">
+						<Border.GestureRecognizers>
+							<TapGestureRecognizer
+								Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenReportCommand}"
+								CommandParameter="{Binding .}" />
+						</Border.GestureRecognizers>
+						<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+							<Label Grid.Row="0" Grid.Column="0"
+								   Text="{Binding ProblemName}"
+								   FontSize="17" FontAttributes="Bold" />
+							<Label Grid.Row="1" Grid.Column="0"
+								   Text="{Binding FieldName}"
+								   TextColor="#2E7D32" />
+							<Label Grid.Row="2" Grid.Column="0"
+								   Text="{Binding Summary}"
+								   TextColor="Gray" FontSize="13" />
+
+							<VerticalStackLayout Grid.Row="0" Grid.RowSpan="3" Grid.Column="1"
+												 Spacing="4" VerticalOptions="Center" HorizontalOptions="End">
+								<Label Text="{Binding StatusText}"
+									   TextColor="{Binding StatusColor}"
+									   FontAttributes="Bold"
+									   HorizontalTextAlignment="End" />
+								<Label Text="{Binding SeverityText}"
+									   TextColor="Gray" FontSize="12"
+									   HorizontalTextAlignment="End" />
+							</VerticalStackLayout>
+						</Grid>
+					</Border>
+				</DataTemplate>
+			</CollectionView.ItemTemplate>
+		</CollectionView>
+	</RefreshView>
+</ContentPage>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:vm="clr-namespace:KoiPonders.ViewModels"
+			 xmlns:models="clr-namespace:KoiPonders.Models"
+			 x:Class="KoiPonders.Views.FieldsPage"
+			 x:DataType="vm:FieldsViewModel"
+			 Title="Fields">
+
+	<Grid RowDefinitions="*">
+		<RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding RefreshCommand}">
+			<CollectionView ItemsSource="{Binding Fields}">
+				<CollectionView.EmptyView>
+					<StackLayout Padding="24" VerticalOptions="Center">
+						<Label Text="No fields yet"
+							   FontSize="18"
+							   FontAttributes="Bold"
+							   HorizontalOptions="Center" />
+						<Label Text="Go to the Farm Map to draw or walk your first plot."
+							   HorizontalTextAlignment="Center"
+							   TextColor="Gray" />
+					</StackLayout>
+				</CollectionView.EmptyView>
+
+				<CollectionView.ItemTemplate>
+					<DataTemplate x:DataType="models:PlantField">
+						<Border Margin="10,6" Padding="12" StrokeShape="RoundRectangle 10"
+								Stroke="#DDDDDD" BackgroundColor="White">
+							<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+								<Label Grid.Row="0" Grid.Column="0"
+									   Text="{Binding Name}"
+									   FontSize="17" FontAttributes="Bold" />
+								<Label Grid.Row="1" Grid.Column="0"
+									   Text="{Binding CropType}"
+									   TextColor="#2E7D32" />
+								<Label Grid.Row="2" Grid.Column="0"
+									   TextColor="Gray" FontSize="13">
+									<Label.Text>
+										<MultiBinding StringFormat="{}{0:0.###} ha • {1} open report(s)">
+											<Binding Path="AreaHectares" />
+											<Binding Path="OpenReportCount" />
+										</MultiBinding>
+									</Label.Text>
+								</Label>
+
+								<HorizontalStackLayout Grid.Row="0" Grid.RowSpan="3" Grid.Column="1"
+													   Spacing="6" VerticalOptions="Center">
+									<Button Text="Report"
+											Padding="10,4"
+											FontSize="13"
+											BackgroundColor="#2E7D32"
+											Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenReportsCommand}"
+											CommandParameter="{Binding .}" />
+									<Button Text="✕"
+											Padding="10,4"
+											FontSize="13"
+											BackgroundColor="#B71C1C"
+											Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteFieldCommand}"
+											CommandParameter="{Binding .}" />
+								</HorizontalStackLayout>
+							</Grid>
+						</Border>
+					</DataTemplate>
+				</CollectionView.ItemTemplate>
+			</CollectionView>
+		</RefreshView>
+	</Grid>
+</ContentPage>

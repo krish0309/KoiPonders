@@ -1,6 +1,9 @@
 using Esri.ArcGISRuntime;
 using Esri.ArcGISRuntime.Http;
 using Esri.ArcGISRuntime.Security;
+using KoiPonders.Services;
+using KoiPonders.ViewModels;
+using KoiPonders.Views;
 using System.Text.Json;
 
 namespace KoiPonders
@@ -59,6 +62,21 @@ namespace KoiPonders
             // Enable support for TimestampOffset fields, which also changes behavior of Date fields.
             // For more information see https://links.esri.com/DotNetDateTime
             ArcGISRuntimeEnvironment.EnableTimestampOffsetSupport = true;
+
+            // Services
+            builder.Services.AddSingleton<IFarmDataStore, JsonFarmDataStore>();
+
+            // View models
+            builder.Services.AddTransient<MapViewModel>();
+            builder.Services.AddTransient<FieldsViewModel>();
+            builder.Services.AddTransient<ReportsViewModel>();
+            builder.Services.AddTransient<ReportEditViewModel>();
+
+            // Pages
+            builder.Services.AddTransient<MainPage>();
+            builder.Services.AddTransient<FieldsPage>();
+            builder.Services.AddTransient<ReportsPage>();
+            builder.Services.AddTransient<ReportEditPage>();
 
             return builder.Build();
         }

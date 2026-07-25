@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:esri="http://schemas.esri.com/arcgis/runtime/2013"
+			 xmlns:vm="clr-namespace:KoiPonders.ViewModels"
+			 xmlns:controls="clr-namespace:KoiPonders.Controls"
+			 x:Class="KoiPonders.Views.ReportLocationPage"
+			 x:DataType="vm:ReportLocationViewModel"
+			 Shell.NavBarIsVisible="False"
+			 Title="Report Location">
+
+	<Grid ColumnDefinitions="212,*" BackgroundColor="{StaticResource FgBackground}">
+
+		<controls:FarmSidebar Grid.Column="0" ActiveRoute="LogIncidentPage" />
+
+		<Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Padding="20">
+
+			<VerticalStackLayout Grid.Row="0" Spacing="2" Margin="0,0,0,12">
+				<Label Text="Set Report Location" Style="{StaticResource FgH1}" />
+				<Label Text="Tap the map to pinpoint exactly where the problem was observed" Style="{StaticResource FgSubtitle}" />
+			</VerticalStackLayout>
+
+			<Border Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 14">
+				<Grid>
+					<esri:MapView x:Name="mapView" Map="{Binding Map}" GeoViewTapped="OnMapTapped" />
+
+					<Border VerticalOptions="End" HorizontalOptions="Start" Margin="14"
+							StrokeThickness="0" BackgroundColor="#CC10241A" StrokeShape="RoundRectangle 8"
+							Padding="11,6">
+						<Label Text="{Binding StatusMessage}" TextColor="#BFE0CE" FontSize="12" />
+					</Border>
+				</Grid>
+			</Border>
+
+			<Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" Margin="0,14,0,0">
+				<Border Grid.Column="0" Style="{StaticResource FgPill}" HorizontalOptions="Start">
+					<Label Text="{Binding CoordinateText}" FontSize="13" TextColor="{StaticResource FgInk}" />
+				</Border>
+				<Button Grid.Column="1" Text="Clear Pin" Command="{Binding ClearCommand}"
+						Style="{StaticResource FgSecondaryButton}" />
+				<Button Grid.Column="2" Text="✓ Use This Location" Clicked="OnConfirmLocation"
+						IsEnabled="{Binding HasLocation}"
+						BackgroundColor="{StaticResource FgAccent}" TextColor="White"
+						CornerRadius="10" Padding="16,7" FontAttributes="Bold" />
+			</Grid>
+		</Grid>
+	</Grid>
+</ContentPage>

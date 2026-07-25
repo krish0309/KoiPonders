@@ -2,12 +2,23 @@
 {
     public partial class MainPage : ContentPage
     {
-        public MainPage()
+        private readonly MapViewModel _viewModel;
+
+        public MainPage(MapViewModel viewModel)
         {
             InitializeComponent();
 
-            this.BindingContext = new MapViewModel();
+            _viewModel = viewModel;
+            BindingContext = _viewModel;
+
+            mapView.GraphicsOverlays?.Add(_viewModel.FieldsOverlay);
+            mapView.GeometryEditor = _viewModel.GeometryEditor;
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await _viewModel.LoadFieldsAsync();
         }
     }
-
 }

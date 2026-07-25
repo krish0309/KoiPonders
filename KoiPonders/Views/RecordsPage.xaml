@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:vm="clr-namespace:KoiPonders.ViewModels"
+			 xmlns:controls="clr-namespace:KoiPonders.Controls"
+			 x:Class="KoiPonders.Views.RecordsPage"
+			 x:DataType="vm:RecordsViewModel"
+			 Shell.NavBarIsVisible="False"
+			 Title="Records &amp; Log">
+
+	<Grid ColumnDefinitions="212,*" BackgroundColor="{StaticResource FgBackground}">
+
+		<controls:FarmSidebar Grid.Column="0" ActiveRoute="RecordsPage" />
+
+		<Grid Grid.Column="1" RowDefinitions="Auto,*" Padding="20">
+
+			<VerticalStackLayout Grid.Row="0" Spacing="2" Margin="0,0,0,16">
+				<Label Text="Records &amp; Spatial Database Logs" Style="{StaticResource FgH1}" />
+				<Label Text="Every geo-tagged incident in your ArcGIS spatial database" Style="{StaticResource FgSubtitle}" />
+			</VerticalStackLayout>
+
+			<Border Grid.Row="1" Style="{StaticResource FgCard}" Padding="0">
+				<Grid RowDefinitions="Auto,*">
+
+					<!-- Header row -->
+					<Grid Grid.Row="0" ColumnDefinitions="1.2*,1.2*,1.6*,1*,1*,1*" Padding="16,12"
+						  BackgroundColor="{StaticResource FgChip}">
+						<Label Grid.Column="0" Text="DATE" Style="{StaticResource FgCaption}" FontAttributes="Bold" />
+						<Label Grid.Column="1" Text="FIELD" Style="{StaticResource FgCaption}" FontAttributes="Bold" />
+						<Label Grid.Column="2" Text="PROBLEM" Style="{StaticResource FgCaption}" FontAttributes="Bold" />
+						<Label Grid.Column="3" Text="CATEGORY" Style="{StaticResource FgCaption}" FontAttributes="Bold" />
+						<Label Grid.Column="4" Text="SEVERITY" Style="{StaticResource FgCaption}" FontAttributes="Bold" />
+						<Label Grid.Column="5" Text="STATUS" Style="{StaticResource FgCaption}" FontAttributes="Bold" />
+					</Grid>
+
+					<CollectionView Grid.Row="1" ItemsSource="{Binding Rows}">
+						<CollectionView.EmptyView>
+							<Label Text="No records yet. Logged incidents will appear here."
+								   TextColor="#5E7C6A" HorizontalTextAlignment="Center" Margin="0,40" />
+						</CollectionView.EmptyView>
+						<CollectionView.ItemTemplate>
+							<DataTemplate x:DataType="vm:RecordRow">
+								<Grid ColumnDefinitions="1.2*,1.2*,1.6*,1*,1*,1*" Padding="16,12" ColumnSpacing="6">
+									<Grid.GestureRecognizers />
+									<Label Grid.Column="0" Text="{Binding Date}" FontSize="12" TextColor="{StaticResource FgInkMuted}" VerticalOptions="Center" />
+									<Label Grid.Column="1" Text="{Binding Field}" FontSize="12" TextColor="{StaticResource FgInk}" FontAttributes="Bold" VerticalOptions="Center" />
+									<Label Grid.Column="2" Text="{Binding Problem}" FontSize="12" TextColor="{StaticResource FgInk}" VerticalOptions="Center" />
+									<Label Grid.Column="3" Text="{Binding Category}" FontSize="12" TextColor="{StaticResource FgInkMuted}" VerticalOptions="Center" />
+									<Border Grid.Column="4" StrokeThickness="0" BackgroundColor="{Binding SeverityColor}"
+											StrokeShape="RoundRectangle 8" Padding="7,3" HorizontalOptions="Start" VerticalOptions="Center">
+										<Label Text="{Binding Severity}" TextColor="White" FontSize="10" FontAttributes="Bold" />
+									</Border>
+									<Label Grid.Column="5" Text="{Binding Status}" FontSize="12" TextColor="{StaticResource FgInkMuted}" VerticalOptions="Center" />
+								</Grid>
+							</DataTemplate>
+						</CollectionView.ItemTemplate>
+					</CollectionView>
+				</Grid>
+			</Border>
+		</Grid>
+	</Grid>
+</ContentPage>

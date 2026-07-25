@@ -35,6 +35,10 @@
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>KoiPonders uses your location to map field boundaries as you walk them.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>KoiPonders uses the camera to attach photos to pest and disease reports.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>KoiPonders lets you attach photos from your library to pest and disease reports.</string>
 </dict>
 </plist>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:vm="clr-namespace:KoiPonders.ViewModels"
+			 xmlns:controls="clr-namespace:KoiPonders.Controls"
+			 x:Class="KoiPonders.Views.RegionalFeedPage"
+			 x:DataType="vm:RegionalFeedViewModel"
+			 Shell.NavBarIsVisible="False"
+			 Title="Regional Feed">
+
+	<Grid ColumnDefinitions="212,*" BackgroundColor="{StaticResource FgBackground}">
+
+		<controls:FarmSidebar Grid.Column="0" ActiveRoute="RegionalFeedPage" />
+
+		<Grid Grid.Column="1" RowDefinitions="Auto,*" Padding="20">
+
+			<VerticalStackLayout Grid.Row="0" Spacing="2" Margin="0,0,0,16">
+				<Label Text="Regional Incident Map &amp; Neighbor Feed" Style="{StaticResource FgH1}" />
+				<Label Text="Live alerts shared across nearby ArcGIS-connected operations" Style="{StaticResource FgSubtitle}" />
+			</VerticalStackLayout>
+
+			<Grid Grid.Row="1" ColumnDefinitions="*,360" ColumnSpacing="16">
+
+				<!-- Map placeholder -->
+				<Border Grid.Column="0" StrokeThickness="0" BackgroundColor="{StaticResource FgRail}"
+						StrokeShape="RoundRectangle 14">
+					<VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="6">
+						<Label Text="🗺" FontSize="48" HorizontalOptions="Center" />
+						<Label Text="Regional Incident Overlay" TextColor="White" FontSize="16" FontAttributes="Bold"
+							   HorizontalOptions="Center" />
+						<Label Text="5 active alerts within 15 miles" TextColor="#9FBBAC" FontSize="12"
+							   HorizontalOptions="Center" />
+					</VerticalStackLayout>
+				</Border>
+
+				<!-- Active regional alerts -->
+				<Border Grid.Column="1" Style="{StaticResource FgPanel}" Padding="16">
+					<Grid RowDefinitions="Auto,*">
+						<Label Grid.Row="0" Text="Active Regional Alerts" Style="{StaticResource FgH2}" Margin="0,0,0,10" />
+						<CollectionView Grid.Row="1" ItemsSource="{Binding Alerts}">
+							<CollectionView.ItemTemplate>
+								<DataTemplate x:DataType="vm:RegionalAlert">
+									<Border Style="{StaticResource FgCard}" Margin="0,5" Padding="12">
+										<Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="4">
+											<Label Grid.Row="0" Grid.Column="0" Text="{Binding Title}"
+												   FontAttributes="Bold" TextColor="{StaticResource FgInk}" FontSize="14" />
+											<Border Grid.Row="0" Grid.Column="1" StrokeThickness="0"
+													BackgroundColor="{Binding SeverityColor}" StrokeShape="RoundRectangle 8"
+													Padding="8,3">
+												<Label Text="{Binding Severity}" TextColor="White" FontSize="10" FontAttributes="Bold" />
+											</Border>
+											<Label Grid.Row="1" Grid.Column="0" TextColor="{StaticResource FgInkSubtle}" FontSize="12">
+												<Label.FormattedText>
+													<FormattedString>
+														<Span Text="{Binding Location}" />
+														<Span Text="  ·  " />
+														<Span Text="{Binding Distance}" />
+													</FormattedString>
+												</Label.FormattedText>
+											</Label>
+											<Label Grid.Row="1" Grid.Column="1" Text="{Binding TimeAgo}"
+												   Style="{StaticResource FgCaption}" />
+										</Grid>
+									</Border>
+								</DataTemplate>
+							</CollectionView.ItemTemplate>
+						</CollectionView>
+					</Grid>
+				</Border>
+			</Grid>
+		</Grid>
+	</Grid>
+</ContentPage>

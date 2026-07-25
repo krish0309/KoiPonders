@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:vm="clr-namespace:KoiPonders.ViewModels"
+			 xmlns:controls="clr-namespace:KoiPonders.Controls"
+			 x:Class="KoiPonders.Views.GeoAiPage"
+			 x:DataType="vm:GeoAiViewModel"
+			 Shell.NavBarIsVisible="False"
+			 Title="GeoAI Predict">
+
+	<Grid ColumnDefinitions="212,*" BackgroundColor="{StaticResource FgBackground}">
+
+		<controls:FarmSidebar Grid.Column="0" ActiveRoute="GeoAiPage" />
+
+		<ScrollView Grid.Column="1">
+			<VerticalStackLayout Padding="20" Spacing="16">
+
+				<VerticalStackLayout Spacing="2">
+					<Label Text="GeoAI Predictive Epidemiology" Style="{StaticResource FgH1}" />
+					<Label Text="Spatial machine-learning outbreak forecast for your parcels" Style="{StaticResource FgSubtitle}" />
+				</VerticalStackLayout>
+
+				<Grid ColumnDefinitions="*,340" ColumnSpacing="16">
+
+					<!-- Heatmap placeholder -->
+					<Border Grid.Column="0" StrokeThickness="0" StrokeShape="RoundRectangle 14" HeightRequest="360" Padding="0">
+						<Grid>
+							<Grid ColumnDefinitions="*,*,*,*" RowDefinitions="*,*,*,*">
+								<BoxView Grid.Row="0" Grid.Column="0" Color="#E1A100" />
+								<BoxView Grid.Row="0" Grid.Column="1" Color="#B71C1C" />
+								<BoxView Grid.Row="0" Grid.Column="2" Color="#E1A100" />
+								<BoxView Grid.Row="0" Grid.Column="3" Color="#2E9E56" />
+								<BoxView Grid.Row="1" Grid.Column="0" Color="#B71C1C" />
+								<BoxView Grid.Row="1" Grid.Column="1" Color="#B71C1C" />
+								<BoxView Grid.Row="1" Grid.Column="2" Color="#E1A100" />
+								<BoxView Grid.Row="1" Grid.Column="3" Color="#E1A100" />
+								<BoxView Grid.Row="2" Grid.Column="0" Color="#E1A100" />
+								<BoxView Grid.Row="2" Grid.Column="1" Color="#E1A100" />
+								<BoxView Grid.Row="2" Grid.Column="2" Color="#2E9E56" />
+								<BoxView Grid.Row="2" Grid.Column="3" Color="#2E9E56" />
+								<BoxView Grid.Row="3" Grid.Column="0" Color="#2E9E56" />
+								<BoxView Grid.Row="3" Grid.Column="1" Color="#2E9E56" />
+								<BoxView Grid.Row="3" Grid.Column="2" Color="#2E9E56" />
+								<BoxView Grid.Row="3" Grid.Column="3" Color="#2E9E56" />
+							</Grid>
+							<Border VerticalOptions="End" HorizontalOptions="Start" Margin="14"
+									StrokeThickness="0" BackgroundColor="#CC10241A" StrokeShape="RoundRectangle 8" Padding="11,6">
+								<Label Text="GeoAI Risk Heatmap · EPSG:3857" TextColor="#BFE0CE" FontSize="11" />
+							</Border>
+						</Grid>
+					</Border>
+
+					<!-- Prediction panel -->
+					<VerticalStackLayout Grid.Column="1" Spacing="16">
+
+						<Border Style="{StaticResource FgCard}">
+							<VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+								<Label Text="MODEL OUTBREAK PROBABILITY" Style="{StaticResource FgCaption}"
+									   HorizontalOptions="Center" CharacterSpacing="1" />
+								<Label Text="{Binding OutbreakProbability}" FontSize="44" FontAttributes="Bold"
+									   TextColor="{StaticResource FgDanger}" HorizontalOptions="Center" />
+								<Label Text="{Binding ForecastWindow}" Style="{StaticResource FgCaption}"
+									   HorizontalOptions="Center" />
+							</VerticalStackLayout>
+						</Border>
+
+						<Border Style="{StaticResource FgCard}">
+							<VerticalStackLayout Spacing="10">
+								<Label Text="Contributing Risk Factors" Style="{StaticResource FgH2}" />
+								<VerticalStackLayout BindableLayout.ItemsSource="{Binding RiskFactors}" Spacing="10">
+									<BindableLayout.ItemTemplate>
+										<DataTemplate x:DataType="vm:RiskFactor">
+											<VerticalStackLayout Spacing="3">
+												<Grid ColumnDefinitions="*,Auto">
+													<Label Grid.Column="0" Text="{Binding Name}" FontSize="13"
+														   TextColor="{StaticResource FgInk}" />
+													<Label Grid.Column="1" Text="{Binding Weight}" FontSize="12"
+														   TextColor="{Binding Color}" FontAttributes="Bold" />
+												</Grid>
+												<ProgressBar Progress="{Binding Fraction}" ProgressColor="{Binding Color}" />
+											</VerticalStackLayout>
+										</DataTemplate>
+									</BindableLayout.ItemTemplate>
+								</VerticalStackLayout>
+							</VerticalStackLayout>
+						</Border>
+
+						<Border Style="{StaticResource FgCard}">
+							<VerticalStackLayout Spacing="8">
+								<Label Text="Recommended Protocols" Style="{StaticResource FgH2}" />
+								<VerticalStackLayout BindableLayout.ItemsSource="{Binding Protocols}" Spacing="6">
+									<BindableLayout.ItemTemplate>
+										<DataTemplate x:DataType="vm:ProtocolStep">
+											<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+												<Label Grid.Column="0" Text="✓" TextColor="{StaticResource FgAccent}" FontAttributes="Bold" />
+												<Label Grid.Column="1" Text="{Binding Text}" FontSize="12"
+													   TextColor="{StaticResource FgInkMuted}" />
+											</Grid>
+										</DataTemplate>
+									</BindableLayout.ItemTemplate>
+								</VerticalStackLayout>
+							</VerticalStackLayout>
+						</Border>
+					</VerticalStackLayout>
+				</Grid>
+			</VerticalStackLayout>
+		</ScrollView>
+	</Grid>
+</ContentPage>

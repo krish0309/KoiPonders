@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:vm="clr-namespace:KoiPonders.ViewModels"
+			 xmlns:models="clr-namespace:KoiPonders.Models"
+			 xmlns:controls="clr-namespace:KoiPonders.Controls"
+			 x:Class="KoiPonders.Views.LogIncidentPage"
+			 x:DataType="vm:LogIncidentViewModel"
+			 Shell.NavBarIsVisible="False"
+			 Title="Log Field Incident">
+
+	<Grid ColumnDefinitions="212,*" BackgroundColor="{StaticResource FgBackground}">
+
+		<controls:FarmSidebar Grid.Column="0" ActiveRoute="LogIncidentPage" />
+
+		<ScrollView Grid.Column="1">
+			<VerticalStackLayout Padding="20" Spacing="16">
+
+				<VerticalStackLayout Spacing="2">
+					<Label Text="Log Field Incident" Style="{StaticResource FgH1}" />
+					<Label Text="Capture an anomaly and geo-tag it to your ArcGIS parcels" Style="{StaticResource FgSubtitle}" />
+				</VerticalStackLayout>
+
+				<Grid ColumnDefinitions="*,340" ColumnSpacing="16">
+
+					<!-- Form card -->
+					<Border Grid.Column="0" Style="{StaticResource FgCard}">
+						<VerticalStackLayout Spacing="12">
+							<Label Text="Anomaly Log" Style="{StaticResource FgH2}" />
+
+							<Label Text="Affected Field" Style="{StaticResource FgCaption}" />
+							<Picker ItemsSource="{Binding Fields}" ItemDisplayBinding="{Binding Name}"
+									SelectedItem="{Binding SelectedField}" Title="Select a field" />
+
+							<Label Text="Incident Title" Style="{StaticResource FgCaption}" />
+							<Entry Placeholder="e.g. Powdery mildew on north rows" Text="{Binding Title}" />
+
+							<Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+								<VerticalStackLayout Grid.Column="0" Spacing="4">
+									<Label Text="Category" Style="{StaticResource FgCaption}" />
+									<Picker ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}" />
+								</VerticalStackLayout>
+								<VerticalStackLayout Grid.Column="1" Spacing="4">
+									<Label Text="Severity" Style="{StaticResource FgCaption}" />
+									<Picker ItemsSource="{Binding Severities}" SelectedItem="{Binding Severity}" />
+								</VerticalStackLayout>
+							</Grid>
+
+							<Label Text="Field Notes" Style="{StaticResource FgCaption}" />
+							<Editor Placeholder="Describe symptoms, spread, and conditions…"
+									Text="{Binding Notes}" HeightRequest="110" />
+
+							<Button Text="Submit Geo-tagged Report to ArcGIS"
+									Command="{Binding SubmitCommand}"
+									Style="{StaticResource FgPrimaryButton}" />
+
+							<Label Text="{Binding StatusMessage}" TextColor="{StaticResource FgAccent}"
+								   FontSize="12" />
+						</VerticalStackLayout>
+					</Border>
+
+					<!-- Evidence + drop location -->
+					<VerticalStackLayout Grid.Column="1" Spacing="16">
+						<Border Style="{StaticResource FgCard}">
+							<VerticalStackLayout Spacing="10">
+								<Label Text="Visual Evidence" Style="{StaticResource FgH2}" />
+								<Border StrokeThickness="0" BackgroundColor="{StaticResource FgChip}"
+										StrokeShape="RoundRectangle 10" HeightRequest="130">
+									<VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="4">
+										<Label Text="📷" FontSize="30" HorizontalOptions="Center" />
+										<Label Text="Tap to attach a photo" Style="{StaticResource FgCaption}" />
+									</VerticalStackLayout>
+								</Border>
+							</VerticalStackLayout>
+						</Border>
+
+						<Border Style="{StaticResource FgCard}">
+							<VerticalStackLayout Spacing="10">
+								<Label Text="ArcGIS Drop Location" Style="{StaticResource FgH2}" />
+								<Border StrokeThickness="0" BackgroundColor="{StaticResource FgRail}"
+										StrokeShape="RoundRectangle 10" HeightRequest="130">
+									<VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="4">
+										<Label Text="📍" FontSize="30" HorizontalOptions="Center" />
+										<Label Text="{Binding DropLocation}" TextColor="#BFE0CE"
+											   FontSize="11" HorizontalTextAlignment="Center" Margin="10,0" />
+									</VerticalStackLayout>
+								</Border>
+							</VerticalStackLayout>
+						</Border>
+					</VerticalStackLayout>
+				</Grid>
+			</VerticalStackLayout>
+		</ScrollView>
+	</Grid>
+</ContentPage>

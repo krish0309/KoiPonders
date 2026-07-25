@@ -448,4 +448,64 @@
         <Setter Property="SelectedTabColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
     </Style>
 
+    <!-- ===================== FarmGuard shared styles ===================== -->
+
+    <Style x:Key="FgCard" TargetType="Border">
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="BackgroundColor" Value="{StaticResource FgCard}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <Style x:Key="FgPanel" TargetType="Border">
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="BackgroundColor" Value="{StaticResource FgPanel}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+    </Style>
+
+    <Style x:Key="FgPill" TargetType="Border">
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="BackgroundColor" Value="{StaticResource FgCard}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+        <Setter Property="Padding" Value="11,6" />
+    </Style>
+
+    <Style x:Key="FgH1" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource FgInk}" />
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style x:Key="FgH2" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource FgInk}" />
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style x:Key="FgSubtitle" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource FgInkMuted}" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style x:Key="FgCaption" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource FgInkSubtle}" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style x:Key="FgPrimaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource FgAccent}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="HeightRequest" Value="50" />
+    </Style>
+
+    <Style x:Key="FgSecondaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource FgAccentDeep}" />
+        <Setter Property="TextColor" Value="#DDEDE2" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="Padding" Value="12,7" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
 </ResourceDictionary>

@@ -67,5 +67,17 @@
 		<EmbeddedResource Include="ArcGISSettings.json" />
 		<EmbeddedResource Include="ArcGISSettings.local.json" Condition="Exists('ArcGISSettings.local.json')" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Views\FieldsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </None>
+	  <None Update="Views\ReportEditPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </None>
+	  <None Update="Views\ReportsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </None>
+	</ItemGroup>
 	
 </Project>

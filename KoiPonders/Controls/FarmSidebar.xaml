@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:controls="clr-namespace:KoiPonders.Controls"
+			 x:Class="KoiPonders.Controls.FarmSidebar"
+			 x:Name="root">
+
+	<Grid RowDefinitions="Auto,*,Auto" BackgroundColor="{StaticResource FgRail}"
+		  WidthRequest="212">
+
+		<!-- Brand -->
+		<VerticalStackLayout Grid.Row="0" Padding="18,20,18,10" Spacing="2">
+			<HorizontalStackLayout Spacing="9">
+				<Border WidthRequest="30" HeightRequest="30" StrokeThickness="0"
+						BackgroundColor="{StaticResource FgAccentDark}" StrokeShape="RoundRectangle 8">
+					<Label Text="🛡" FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" />
+				</Border>
+				<Label Text="FarmGuard" TextColor="White" FontSize="19" FontAttributes="Bold"
+					   VerticalOptions="Center" />
+			</HorizontalStackLayout>
+			<Label Text="ARCGIS SPATIAL ENGINE" TextColor="{StaticResource FgRailMuted}" FontSize="9"
+				   CharacterSpacing="1.5" Margin="1,2,0,0" />
+		</VerticalStackLayout>
+
+		<!-- Nav -->
+		<VerticalStackLayout Grid.Row="1" Padding="12,14" Spacing="4"
+							 BindableLayout.ItemsSource="{Binding Items, Source={x:Reference root}}">
+			<BindableLayout.ItemTemplate>
+				<DataTemplate x:DataType="controls:SidebarItem">
+					<Border StrokeThickness="0" StrokeShape="RoundRectangle 10"
+							BackgroundColor="{Binding Background}">
+						<Grid ColumnDefinitions="24,*" Padding="12,10" ColumnSpacing="10">
+							<Grid.GestureRecognizers>
+								<TapGestureRecognizer
+									Command="{Binding NavigateCommand, Source={x:Reference root}}"
+									CommandParameter="{Binding Route}" />
+							</Grid.GestureRecognizers>
+							<Label Grid.Column="0" Text="{Binding Icon}" FontSize="15"
+								   TextColor="{Binding IconColor}" VerticalOptions="Center" />
+							<Label Grid.Column="1" Text="{Binding Title}" FontSize="14"
+								   TextColor="{Binding TextColor}" FontAttributes="{Binding FontAttributes}"
+								   VerticalOptions="Center" />
+						</Grid>
+					</Border>
+				</DataTemplate>
+			</BindableLayout.ItemTemplate>
+		</VerticalStackLayout>
+
+		<!-- Organization footer -->
+		<VerticalStackLayout Grid.Row="2" Padding="18,10,18,20" Spacing="1">
+			<Label Text="ORGANIZATION" TextColor="{StaticResource FgRailMuted}" FontSize="9" CharacterSpacing="1.5" />
+			<Label Text="Oakridge Agronomy LLC" TextColor="#DDEAE3" FontSize="12" FontAttributes="Bold" />
+			<Label Text="v3.2.14-build" TextColor="{StaticResource FgRailMuted}" FontSize="10" />
+		</VerticalStackLayout>
+	</Grid>
+</ContentView>

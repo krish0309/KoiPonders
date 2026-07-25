@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:vm="clr-namespace:KoiPonders.ViewModels"
+			 xmlns:controls="clr-namespace:KoiPonders.Controls"
+			 x:Class="KoiPonders.Views.DashboardPage"
+			 x:DataType="vm:DashboardViewModel"
+			 x:Name="page"
+			 Shell.NavBarIsVisible="False"
+			 Title="Dashboard">
+
+	<Grid ColumnDefinitions="212,*" BackgroundColor="{StaticResource FgBackground}">
+
+		<controls:FarmSidebar Grid.Column="0" ActiveRoute="DashboardPage" />
+
+		<ScrollView Grid.Column="1">
+			<VerticalStackLayout Padding="20" Spacing="16">
+
+				<!-- Header -->
+				<Grid ColumnDefinitions="*,Auto">
+					<VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+						<Label Text="Oakridge Farm Central" Style="{StaticResource FgH1}" />
+						<Label Text="Command center · Farm-wide situational overview" Style="{StaticResource FgSubtitle}" />
+					</VerticalStackLayout>
+					<HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
+						<Border Style="{StaticResource FgPill}">
+							<Label Text="{Binding WeatherSummary}" FontSize="12" TextColor="{StaticResource FgInk}" />
+						</Border>
+						<Border WidthRequest="34" HeightRequest="34" StrokeThickness="0"
+								BackgroundColor="{StaticResource FgAccentDark}" StrokeShape="RoundRectangle 17">
+							<Label Text="HM" TextColor="White" FontSize="12" FontAttributes="Bold"
+								   HorizontalOptions="Center" VerticalOptions="Center" />
+						</Border>
+					</HorizontalStackLayout>
+				</Grid>
+
+				<!-- Welcome banner -->
+				<Border StrokeThickness="0" BackgroundColor="{StaticResource FgRail}" StrokeShape="RoundRectangle 14" Padding="20">
+					<VerticalStackLayout Spacing="4">
+						<Label Text="Welcome back, Howard" TextColor="White" FontSize="20" FontAttributes="Bold" />
+						<Label Text="{Binding WelcomeSubtitle}" TextColor="#9FBBAC" FontSize="13" />
+					</VerticalStackLayout>
+				</Border>
+
+				<!-- Stat cards -->
+				<CollectionView ItemsSource="{Binding Stats}" HeightRequest="110">
+					<CollectionView.ItemsLayout>
+						<GridItemsLayout Orientation="Horizontal" HorizontalItemSpacing="12" />
+					</CollectionView.ItemsLayout>
+					<CollectionView.ItemTemplate>
+						<DataTemplate x:DataType="vm:StatCard">
+							<Border Style="{StaticResource FgCard}" WidthRequest="180">
+								<VerticalStackLayout Spacing="4" VerticalOptions="Center">
+									<Label Text="{Binding Value}" FontSize="26" FontAttributes="Bold"
+										   TextColor="{Binding Accent}" />
+									<Label Text="{Binding Label}" Style="{StaticResource FgCaption}" />
+								</VerticalStackLayout>
+							</Border>
+						</DataTemplate>
+					</CollectionView.ItemTemplate>
+				</CollectionView>
+
+				<!-- Active field boundary map placeholder + platform shortcuts -->
+				<Grid ColumnDefinitions="*,320" ColumnSpacing="16">
+
+					<Border Grid.Column="0" Style="{StaticResource FgCard}" HeightRequest="320" Padding="0">
+						<Grid BackgroundColor="{StaticResource FgChip}">
+							<VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="6">
+								<Label Text="◉" FontSize="46" TextColor="{StaticResource FgAccent}" HorizontalOptions="Center" />
+								<Label Text="Active Field Boundary Map" Style="{StaticResource FgH2}" HorizontalOptions="Center" />
+								<Button Text="Open Map My Farm" Command="{Binding NavigateCommand}" CommandParameter="MainPage"
+										Style="{StaticResource FgPrimaryButton}" WidthRequest="200" />
+							</VerticalStackLayout>
+						</Grid>
+					</Border>
+
+					<Border Grid.Column="1" Style="{StaticResource FgPanel}" Padding="16">
+						<VerticalStackLayout Spacing="10">
+							<Label Text="Platform Shortcuts" Style="{StaticResource FgH2}" />
+							<VerticalStackLayout BindableLayout.ItemsSource="{Binding Shortcuts}" Spacing="8">
+								<BindableLayout.ItemTemplate>
+									<DataTemplate x:DataType="vm:ShortcutItem">
+										<Border Style="{StaticResource FgCard}" Padding="12">
+											<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+												<Grid.GestureRecognizers>
+													<TapGestureRecognizer
+														Command="{Binding BindingContext.NavigateCommand, Source={x:Reference page}}"
+														CommandParameter="{Binding Route}" />
+												</Grid.GestureRecognizers>
+												<Border Grid.Column="0" WidthRequest="34" HeightRequest="34"
+														BackgroundColor="{StaticResource FgChip}" StrokeThickness="0"
+														StrokeShape="RoundRectangle 8" VerticalOptions="Center">
+													<Label Text="{Binding Icon}" TextColor="{StaticResource FgAccent}"
+														   FontSize="16" HorizontalOptions="Center" VerticalOptions="Center" />
+												</Border>
+												<VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
+													<Label Text="{Binding Title}" FontAttributes="Bold"
+														   TextColor="{StaticResource FgInk}" FontSize="14" />
+													<Label Text="{Binding Subtitle}" Style="{StaticResource FgCaption}" />
+												</VerticalStackLayout>
+												<Label Grid.Column="2" Text="›" FontSize="22"
+													   TextColor="{StaticResource FgInkSubtle}" VerticalOptions="Center" />
+											</Grid>
+										</Border>
+									</DataTemplate>
+								</BindableLayout.ItemTemplate>
+							</VerticalStackLayout>
+						</VerticalStackLayout>
+					</Border>
+				</Grid>
+			</VerticalStackLayout>
+		</ScrollView>
+	</Grid>
+</ContentPage>
