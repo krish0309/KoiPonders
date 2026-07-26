@@ -61,11 +61,7 @@ public partial class IncidentReportPage : ContentPage
 
     private async void OnUploadPhoto(object sender, EventArgs e)
     {
-        var photo = await FilePicker.Default.PickAsync(new PickOptions
-        {
-            FileTypes = FilePickerFileType.Images,
-            PickerTitle = "Photo evidence"
-        });
+        var photo = (await MediaPicker.Default.PickPhotosAsync()).FirstOrDefault();
         if (photo is not null) await LoadPhoto(photo);
     }
 
