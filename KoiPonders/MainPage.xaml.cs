@@ -93,7 +93,6 @@ public partial class MainPage : ContentPage
 
         var showMenu = !ActionMenu.IsVisible;
         ActionMenu.IsVisible = showMenu;
-        ActionMenuBackdrop.IsVisible = showMenu;
         ActionMenuButton.Text = showMenu ? CloseIcon : AddIcon;
         SemanticProperties.SetDescription(ActionMenuButton, showMenu ? "Close map actions" : "Open map actions");
     }
@@ -101,7 +100,6 @@ public partial class MainPage : ContentPage
     private void CloseActionMenu()
     {
         ActionMenu.IsVisible = false;
-        ActionMenuBackdrop.IsVisible = false;
         ActionMenuButton.Text = AddIcon;
         SemanticProperties.SetDescription(ActionMenuButton, "Open map actions");
     }
@@ -123,7 +121,9 @@ public partial class MainPage : ContentPage
 
     private async Task ShowWorkspacePanelAsync()
     {
-        PanelBackdrop.IsVisible = true;
+        if (DeviceInfo.Idiom == DeviceIdiom.Desktop)
+            BottomActionControls.IsVisible = false;
+
         ParcelPanel.TranslationX = ParcelPanel.WidthRequest + 32;
         ParcelPanel.IsVisible = true;
         PanelToggleButton.Text = CloseIcon;
@@ -137,7 +137,7 @@ public partial class MainPage : ContentPage
 
         await ParcelPanel.TranslateToAsync(ParcelPanel.WidthRequest + 32, 0, 180, Easing.CubicIn);
         ParcelPanel.IsVisible = false;
-        PanelBackdrop.IsVisible = false;
+        BottomActionControls.IsVisible = true;
         PanelToggleButton.Text = MenuIcon;
         SemanticProperties.SetDescription(PanelToggleButton, "Open parcels and records");
     }
@@ -528,12 +528,63 @@ public partial class MainPage : ContentPage
 
     // ---------- incident reporting ----------
 
-    private void OnReportIncidentClicked(object sender, EventArgs e)
+    private async void OnReportIncidentClicked(object sender, EventArgs e)
     {
         CloseActionMenu();
         if (_geometryEditor.IsStarted) _geometryEditor.Stop();
 
-        _awaitingIncidentTap = true;
+        var choice = await DisplayActionSheetAsync(
+            "Incident location", "Cancel", null, "Use current location", "Select on map");
+
+        if (choice == "Select on map")
+        {
+            _awaitingIncidentTap = true;
+            return;
+        }
+
+        if (choice == "Use current location")
+            await ReportFromCurrentLocationAsync();
+    }
+
+    private async Task ReportFromCurrentLocationAsync()
+    {
+        try
+        {
+            var permission = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+            if (permission != PermissionStatus.Granted)
+                throw new InvalidOperationException("Location permission was not granted.");
+
+            var location = await Geolocation.Default.GetLocationAsync(
+                new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(10)));
+            if (location is null)
+                throw new InvalidOperationException("The device did not return a location.");
+
+            var point = new MapPoint(location.Longitude, location.Latitude, SpatialReferences.Wgs84);
+            await OpenIncidentFormAsync(point, "Current location");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Current location unavailable", ex.Message, "OK");
+        }
+    }
+
+    private async Task OpenIncidentFormAsync(MapPoint point, string locationSource)
+    {
+        var page = new IncidentReportPage(point, locationSource);
+        await Navigation.PushModalAsync(new NavigationPage(page));
+        var incident = await page.Result;
+        if (incident is null) return;
+
+        incident.FieldName = FieldNameAt(point);
+        _incidents.Add(incident);
+        DrawIncident(incident);
+        RunRiskAnalysis();
+
+        if (RecordsContainer.IsVisible)
+            ParcelCountLabel.Text = $"{_incidents.Count} total";
+
+        await FarmStore.SaveAsync(_parcels, _incidents);
+        await RunAlertsAsync(incident);
     }
 
 
@@ -820,21 +871,7 @@ public partial class MainPage : ContentPage
 
         _awaitingIncidentTap = false;
 
-        var page = new IncidentReportPage(e.Location);
-        await Navigation.PushModalAsync(new NavigationPage(page));
-        var incident = await page.Result;
-        if (incident is null) return;
-
-        incident.FieldName = FieldNameAt(e.Location);
-        _incidents.Add(incident);
-        DrawIncident(incident);
-        RunRiskAnalysis();
-
-        if (RecordsContainer.IsVisible)
-            ParcelCountLabel.Text = $"{_incidents.Count} total";
-
-        await FarmStore.SaveAsync(_parcels, _incidents);
-        await RunAlertsAsync(incident);
+        await OpenIncidentFormAsync(e.Location, "Map selection");
     }
 
     // Identifies the tapped graphic (incident pins take priority over parcels) and

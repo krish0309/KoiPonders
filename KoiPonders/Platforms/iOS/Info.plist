@@ -29,6 +29,6 @@
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>FarmAssist uses your location to place an incident report.</string>
 </dict>
 </plist>

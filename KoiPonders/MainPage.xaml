@@ -43,7 +43,7 @@
                 </Border.StrokeShape>
                 <HorizontalStackLayout Spacing="6">
                     <Image Source="farmassist_logo.png"
-                           WidthRequest="52" HeightRequest="52"
+                           WidthRequest="68" HeightRequest="68"
                            Aspect="AspectFit"
                            SemanticProperties.Description="FarmAssist logo" />
                     <VerticalStackLayout Spacing="0" VerticalOptions="Center">
@@ -106,11 +106,6 @@
                 </VerticalStackLayout>
             </Border>
         </Grid>
-<BoxView x:Name="PanelBackdrop" IsVisible="False" ZIndex="20" Color="#520B1F15">
-            <BoxView.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnClosePanelClicked" />
-            </BoxView.GestureRecognizers>
-        </BoxView>
 
         <!-- Parcels and records now live in a responsive slide-over drawer. -->
         <Border x:Name="ParcelPanel" IsVisible="False" ZIndex="30"
@@ -289,12 +284,6 @@
                         FontSize="14" HeightRequest="48" CornerRadius="14" />
             </Grid>
         </Border>
-
-        <BoxView x:Name="ActionMenuBackdrop" IsVisible="False" ZIndex="40" Color="#3D0B1F15">
-            <BoxView.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnToggleActionMenu" />
-            </BoxView.GestureRecognizers>
-        </BoxView>
 
         <!-- Speed-dial options expand upward from the primary + action. -->
         <VerticalStackLayout x:Name="ActionMenu" IsVisible="False" ZIndex="45"

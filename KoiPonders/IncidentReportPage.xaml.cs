@@ -6,21 +6,25 @@ public partial class IncidentReportPage : ContentPage
 {
     private readonly TaskCompletionSource<Incident?> _tcs = new();
     private readonly MapPoint _location;
+    private readonly string _locationSource;
     private byte[]? _photo;
     private Incident? _draft;
 
     public Task<Incident?> Result => _tcs.Task;
 
-    public IncidentReportPage(MapPoint location)
+    public IncidentReportPage(MapPoint location, string locationSource = "Map selection")
     {
         InitializeComponent();
         _location = location;
+        _locationSource = locationSource;
 
         var wgs = location.SpatialReference is { Wkid: 4326 }
             ? location
             : GeometryEngine.Project(location, SpatialReferences.Wgs84) as MapPoint;
 
-        LocationLabel.Text = wgs is null ? "" : $"Lat {wgs.Y:F5}, Lon {wgs.X:F5}";
+        LocationLabel.Text = wgs is null
+            ? ""
+            : $"{_locationSource} · Lat {wgs.Y:F5}, Lon {wgs.X:F5}";
 
         CategoryPicker.ItemsSource = new List<string>
         {
