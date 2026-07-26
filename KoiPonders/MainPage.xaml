@@ -327,7 +327,7 @@
                     <Shadow Brush="#590F2A1D" Offset="0,5" Radius="12" Opacity="0.35" />
                 </Button.Shadow>
             </Button>
-            <Button x:Name="ActionMenuButton" Text="＋" Clicked="OnToggleActionMenu"
+            <Button x:Name="ActionMenuButton" Text="+" Clicked="OnToggleActionMenu"
                     BackgroundColor="#2E7D32" TextColor="White"
                     WidthRequest="50" HeightRequest="50" Padding="0" CornerRadius="25"
                     FontSize="26" SemanticProperties.Description="Open map actions">

@@ -14,6 +14,10 @@ namespace KoiPonders;
 
 public partial class MainPage : ContentPage
 {
+    private const string MenuIcon = "\u2630";
+    private const string AddIcon = "+";
+    private const string CloseIcon = "\u00D7";
+
     private readonly MapViewModel _viewModel;
     private readonly GeometryEditor _geometryEditor = new();
     private readonly GraphicsOverlay _parcelOverlay = new();
@@ -48,7 +52,7 @@ public partial class MainPage : ContentPage
         _viewModel = new MapViewModel();
         BindingContext = _viewModel;
 
-        // Optional ΓÇö the reporting feature may not be registered.
+        // Optional - the reporting feature may not be registered.
         _reportStore = MauiProgram.Services.GetRequiredService<IReportStore>();
 
         mapView.GraphicsOverlays ??= new GraphicsOverlayCollection();
@@ -90,7 +94,7 @@ public partial class MainPage : ContentPage
         var showMenu = !ActionMenu.IsVisible;
         ActionMenu.IsVisible = showMenu;
         ActionMenuBackdrop.IsVisible = showMenu;
-        ActionMenuButton.Text = showMenu ? "├ù" : "∩╝ï";
+        ActionMenuButton.Text = showMenu ? CloseIcon : AddIcon;
         SemanticProperties.SetDescription(ActionMenuButton, showMenu ? "Close map actions" : "Open map actions");
     }
 
@@ -98,7 +102,7 @@ public partial class MainPage : ContentPage
     {
         ActionMenu.IsVisible = false;
         ActionMenuBackdrop.IsVisible = false;
-        ActionMenuButton.Text = "∩╝ï";
+        ActionMenuButton.Text = AddIcon;
         SemanticProperties.SetDescription(ActionMenuButton, "Open map actions");
     }
 
@@ -122,7 +126,7 @@ public partial class MainPage : ContentPage
         PanelBackdrop.IsVisible = true;
         ParcelPanel.TranslationX = ParcelPanel.WidthRequest + 32;
         ParcelPanel.IsVisible = true;
-        PanelToggleButton.Text = "├ù";
+        PanelToggleButton.Text = CloseIcon;
         SemanticProperties.SetDescription(PanelToggleButton, "Close parcels and records");
         await ParcelPanel.TranslateToAsync(0, 0, 220, Easing.CubicOut);
     }
@@ -134,7 +138,7 @@ public partial class MainPage : ContentPage
         await ParcelPanel.TranslateToAsync(ParcelPanel.WidthRequest + 32, 0, 180, Easing.CubicIn);
         ParcelPanel.IsVisible = false;
         PanelBackdrop.IsVisible = false;
-        PanelToggleButton.Text = "Γÿ░";
+        PanelToggleButton.Text = MenuIcon;
         SemanticProperties.SetDescription(PanelToggleButton, "Open parcels and records");
     }
 
@@ -335,8 +339,8 @@ public partial class MainPage : ContentPage
         double acres = recipients.Sum(r => r.Farm.Acres);
 
         var lines = string.Join("\n\n", recipients.Select(r =>
-            $"ΓÇó {r.Farm.FarmName} ΓÇö {r.Farm.Owner}\n" +
-            $"   {r.DistanceMiles:F1} mi ┬╖ {r.Farm.Crop}\n" +
+            $"- {r.Farm.FarmName} - {r.Farm.Owner}\n" +
+            $"   {r.DistanceMiles:F1} mi | {r.Farm.Crop}\n" +
             $"   Matched: {r.Reason}"));
 
         await DisplayAlertAsync(
@@ -467,7 +471,7 @@ public partial class MainPage : ContentPage
             }
         }
 
-        // Boundaries changed ΓÇö recompute exposure.
+        // Boundaries changed - recompute exposure.
         if (_incidents.Count > 0) RunRiskAnalysis();
         await FarmStore.SaveAsync(_parcels, _incidents);
     }
@@ -859,7 +863,7 @@ public partial class MainPage : ContentPage
             $"Owner:  {farm.Owner}\n" +
             $"Crop:   {farm.Crop}\n" +
             $"Area:   {farm.Acres:F1} Ac\n\n" +
-            "Registered on FarmGuard ΓÇö receives alerts for nearby outbreaks affecting this crop.";
+            "Registered on FarmGuard - receives alerts for nearby outbreaks affecting this crop.";
 
         await DisplayAlertAsync(farm.FarmName, details, "Close");
     }
@@ -908,16 +912,6 @@ public partial class MainPage : ContentPage
 
         var result = RiskEngine.Analyze(_incidents, _parcels);
 
-        if (result.ThreatZone is not null)
-        {
-            var zoneSymbol = new SimpleFillSymbol(
-                SimpleFillSymbolStyle.Solid,
-                Color.FromArgb(45, 245, 158, 11),
-                new SimpleLineSymbol(SimpleLineSymbolStyle.Dash,
-                                     Color.FromArgb(200, 245, 158, 11), 2));
-
-            _threatOverlay.Graphics.Add(new Graphic(result.ThreatZone, zoneSymbol));
-        }
 
         var riskSymbol = new SimpleFillSymbol(
             SimpleFillSymbolStyle.Solid,
@@ -934,7 +928,7 @@ public partial class MainPage : ContentPage
         double exposed = result.AtRisk.Sum(r => r.Parcel.Acres);
         ThreatSummaryLabel.Text =
             $"{_incidents.Count} active incident(s). " +
-            $"{result.AtRisk.Count} neighboring field(s) within spread radius ΓÇö " +
+            $"{result.AtRisk.Count} neighboring field(s) within spread radius - " +
             $"{exposed:F1} acres exposed.";
 
         ThreatPanel.IsVisible = result.AtRisk.Count > 0 || result.Infected.Count > 0;
@@ -1008,7 +1002,7 @@ public partial class MainPage : ContentPage
             await mapView.SetViewpointCenterAsync(inc.Location, 12000);
 
         if (!string.IsNullOrWhiteSpace(inc.Treatment))
-            await DisplayAlertAsync($"{inc.PestName} ΓÇö {inc.Severity}",
+            await DisplayAlertAsync($"{inc.PestName} - {inc.Severity}",
                 $"{inc.Notes}\n\nRecommended action:\n{inc.Treatment}", "Close");
     }
 
@@ -1041,7 +1035,7 @@ public partial class MainPage : ContentPage
         }
 
         SummaryButton.IsEnabled = false;
-        AiSummaryLabel.Text = "Analyzing incident historyΓÇª";
+        AiSummaryLabel.Text = "Analyzing incident history...";
 
         AiSummaryLabel.Text = await PestClassifier.SummarizeAsync(_incidents);
 
@@ -1067,8 +1061,8 @@ public partial class MainPage : ContentPage
         var result = await PestClassifier.ClassifyAsync(ms.ToArray());
 
         await DisplayAlertAsync("Result",
-            result is null ? "Failed ΓÇö check Output window"
-                           : $"{result.PestName}\n{result.Severity} ΓÇó {result.Confidence}%\n\n{result.Notes}",
+            result is null ? "Failed - check Output window"
+                           : $"{result.PestName}\n{result.Severity} - {result.Confidence}%\n\n{result.Notes}",
             "OK");
     }
 }

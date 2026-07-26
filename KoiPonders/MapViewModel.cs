@@ -42,7 +42,7 @@ namespace KoiPonders
 
             var imageryLayer = new RasterLayer(new Raster(localPath))
             {
-                Name = "NH GRANIT 2021–2022 Six-Inch Orthophotos"
+                Name = "NH GRANIT 2021-2022 Six-Inch Orthophotos"
             };
             Map.OperationalLayers.Add(imageryLayer);
             await imageryLayer.LoadAsync();
