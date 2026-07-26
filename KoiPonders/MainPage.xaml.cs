@@ -179,7 +179,7 @@ public partial class MainPage : ContentPage
                 _parcelGraphics[parcelGraphic] = parcel;
 
                 var label = new TextSymbol(
-                    $"{parcel.Name}  {parcel.Acres:F1} Ac", Color.White, 11,
+                    ParcelLabelText(parcel.Name, parcel.Acres, parcel.Crop), Color.White, 11,
                     Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Center,
                     Esri.ArcGISRuntime.Symbology.VerticalAlignment.Middle)
                 {
@@ -431,6 +431,14 @@ public partial class MainPage : ContentPage
 
         if (string.IsNullOrWhiteSpace(name)) name = fallback;
 
+        string crop = await DisplayPromptAsync(
+            "Crop in this field",
+            "Which crop grows here? Used to model pest/blight spread.",
+            placeholder: "e.g. Yellow Field Corn (Dent)",
+            initialValue: "") ?? "";
+
+        crop = crop.Trim();
+
         double acres = Math.Abs(GeometryEngine.AreaGeodetic(
             polygon, AreaUnits.Acres, GeodeticCurveType.Geodesic));
 
@@ -438,7 +446,7 @@ public partial class MainPage : ContentPage
         _parcelOverlay.Graphics.Add(parcelGraphic);
 
         var labelSymbol = new TextSymbol(
-            $"{name}  {acres:F1} Ac", Color.White, 11,
+            ParcelLabelText(name, acres, crop), Color.White, 11,
             Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Center,
             Esri.ArcGISRuntime.Symbology.VerticalAlignment.Middle)
         {
@@ -451,6 +459,7 @@ public partial class MainPage : ContentPage
         var parcel = new Parcel
         {
             Name = name,
+            Crop = crop,
             Acres = acres,
             MappedDate = DateTime.Now,
             Geometry = polygon
@@ -512,7 +521,7 @@ public partial class MainPage : ContentPage
             var parcelGraphic = new Graphic(parcel.Geometry, _parcelSymbol);
             _parcelOverlay.Graphics.Add(parcelGraphic);
             _parcelGraphics[parcelGraphic] = parcel;
-            var label = new TextSymbol($"{parcel.Name}  {parcel.Acres:F1} Ac", Color.White, 11, Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Center, Esri.ArcGISRuntime.Symbology.VerticalAlignment.Middle) { HaloColor = Color.FromArgb(190, 10, 30, 20), HaloWidth = 2 };
+            var label = new TextSymbol(ParcelLabelText(parcel.Name, parcel.Acres, parcel.Crop), Color.White, 11, Esri.ArcGISRuntime.Symbology.HorizontalAlignment.Center, Esri.ArcGISRuntime.Symbology.VerticalAlignment.Middle) { HaloColor = Color.FromArgb(190, 10, 30, 20), HaloWidth = 2 };
             if (parcel.Geometry.Extent is { } extent) _parcelOverlay.Graphics.Add(new Graphic(extent.GetCenter(), label));
         }
     }
@@ -738,23 +747,57 @@ public partial class MainPage : ContentPage
 	}
 
 	// Renders projected outbreak points as a density heatmap. The ArcGIS Maps SDK for
-	// .NET has no HeatmapRenderer, so each point becomes a translucent circle whose size
-	// and opacity scale with intensity; overlapping circles blend into hot zones.
+	// .NET has no HeatmapRenderer, so we geodesically buffer and union the projected points
+	// into one filled shape per gradient band, producing a heatmap blob spanning the area.
 	private void RenderSpreadForecast(SpreadForecast forecast)
 	{
 		_spreadOverlay.Graphics.Clear();
 
-		foreach (var point in forecast.Points)
+		// Draw the projection as tiered, organic blobs. Radii are kept small for a
+		// conservative estimate; each tier only includes points at/above its intensity
+		// threshold, and edges are roughened so shapes read as natural, not circular.
+		static Geometry? BuildTier(IEnumerable<SpreadPoint> pts, int minIntensity, double baseRadius, double perWeight)
 		{
-			var location = new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84);
-			int weight = Math.Clamp(point.Intensity, 1, 5);
+			var buffers = new List<Geometry>();
+			foreach (var point in pts)
+			{
+				int w = Math.Clamp(point.Intensity, 1, 5);
+				if (w < minIntensity) continue;
+				var loc = new MapPoint(point.Longitude, point.Latitude, SpatialReferences.Wgs84);
+				double radiusMeters = baseRadius + ((w - minIntensity) * perWeight);
+				var buffer = GeometryEngine.BufferGeodetic(
+					loc, radiusMeters, LinearUnits.Meters, double.NaN, GeodeticCurveType.Geodesic);
+				if (buffer is not null) buffers.Add(buffer);
+			}
+			if (buffers.Count == 0) return null;
 
-			double size = 18 + (weight * 10);
-			int alpha = Math.Clamp(40 + (weight * 30), 40, 190);
-			var fill = Color.FromArgb(alpha, 220, 60, 20);
+			var merged = GeometryEngine.Union(buffers);
+			if (merged is null) return null;
 
-			var symbol = new SimpleMarkerSymbol(SimpleMarkerSymbolStyle.Circle, fill, size);
-			_spreadOverlay.Graphics.Add(new Graphic(location, symbol));
+			// Roughen the outline: densify then generalize so the edge deviates from a
+			// perfect arc, giving a more natural, irregular boundary.
+			var dense = GeometryEngine.DensifyGeodetic(merged, 8, LinearUnits.Meters, GeodeticCurveType.Geodesic);
+			return GeometryEngine.Generalize(dense ?? merged, 6, false) ?? merged;
+		}
+
+		// (outer/watch, mid/affected, core/hot) - tightened radii, increasing opacity.
+		var tiers = new (int minIntensity, double baseRadius, double perWeight, int alpha)[]
+		{
+			(1, 14, 4, 55),
+			(3, 9, 4, 105),
+			(4, 6, 4, 165)
+		};
+
+		foreach (var (minIntensity, baseRadius, perWeight, alpha) in tiers)
+		{
+			var tier = BuildTier(forecast.Points, minIntensity, baseRadius, perWeight);
+			if (tier is null) continue;
+
+			var fill = new SimpleFillSymbol(
+				SimpleFillSymbolStyle.Solid,
+				Color.FromArgb(alpha, 220, 60, 20),
+				new SimpleLineSymbol(SimpleLineSymbolStyle.Solid, Color.FromArgb(Math.Min(alpha + 40, 220), 190, 40, 10), 1));
+			_spreadOverlay.Graphics.Add(new Graphic(tier, fill));
 		}
 
 		_spreadOverlay.IsVisible = _spreadOverlay.Graphics.Count > 0;
@@ -868,6 +911,12 @@ public partial class MainPage : ContentPage
         await DisplayAlertAsync(farm.FarmName, details, "Close");
     }
 
+    // Builds the map label for a parcel: name + acreage, with the crop type on a second line.
+    private static string ParcelLabelText(string name, double acres, string crop) =>
+        string.IsNullOrWhiteSpace(crop)
+            ? $"{name}  {acres:F1} Ac"
+            : $"{name}  {acres:F1} Ac\n{crop}";
+
     private async Task ShowParcelDetailsAsync(Parcel parcel)
     {
         int reportsHere = _incidents.Count(i =>
@@ -875,6 +924,7 @@ public partial class MainPage : ContentPage
 
         var details =
             $"Area:      {parcel.AcresDisplay}\n" +
+            $"Crop:      {(string.IsNullOrWhiteSpace(parcel.Crop) ? "\u2014" : parcel.Crop)}\n" +
             $"{parcel.MappedDisplay}\n" +
             $"Reports:   {reportsHere}";
 
