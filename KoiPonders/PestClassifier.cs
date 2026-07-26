@@ -23,7 +23,9 @@ public static class PestClassifier
     public static bool UseStub = false;
 
     private const string ChatUrl = "https://ist-apim-aoai.azure-api.net/load-balancing/gpt-4o/openai/deployments/gpt-4o/chat/completions?api-version=2024-10-21";
-    private const string ApiKey = "REMOVED_OPENAI_API_KEY";
+    private static string ApiKey =>
+        Environment.GetEnvironmentVariable("FARMASSIST_OPENAI_API_KEY")
+        ?? throw new InvalidOperationException("Set FARMASSIST_OPENAI_API_KEY before using live AI classification.");
 
     private const string KeyHeader = "api-key";
 
@@ -50,10 +52,10 @@ public static class PestClassifier
          "Apply a foliar fungicide if pustules reach the upper canopy before tasseling. Improve airflow by avoiding excess nitrogen and over-dense planting next season."),
         ("Crop Blight", "Northern Corn Leaf Blight", "CRITICAL", "Yellow Field Corn (Dent)",
          "Cigar-shaped grey-green lesions spreading upward; act quickly to limit yield loss.",
-         "Apply a fungicide immediately — lesions above the ear leaf before silking cause serious yield loss. Plan crop rotation and a resistant hybrid for this block next season."),
+         "Apply a fungicide immediately â€” lesions above the ear leaf before silking cause serious yield loss. Plan crop rotation and a resistant hybrid for this block next season."),
         ("Pest Infestation", "Soybean Aphid", "MEDIUM", "Soybean",
          "Colonies on undersides of upper leaves; check for natural predator presence before spraying.",
-         "Only treat if counts exceed roughly 250 aphids per plant and are rising. Check for lady beetles first — natural predators often collapse the colony without any spray."),
+         "Only treat if counts exceed roughly 250 aphids per plant and are rising. Check for lady beetles first â€” natural predators often collapse the colony without any spray."),
     };
 
     private static async Task<Incident?> StubClassifyAsync(byte[] imageBytes)
@@ -293,7 +295,7 @@ public static class PestClassifier
             if (!resp.IsSuccessStatusCode)
             {
                 System.Diagnostics.Debug.WriteLine($"[Summarize] {resp.StatusCode}: {body}");
-                return "Summary unavailable — check connection.";
+                return "Summary unavailable â€” check connection.";
             }
 
             using var doc = JsonDocument.Parse(body);
@@ -421,7 +423,7 @@ public static class PestClassifier
             if (!resp.IsSuccessStatusCode)
             {
                 System.Diagnostics.Debug.WriteLine($"[PredictSpread] {resp.StatusCode}: {body}");
-                forecast.Narrative = "Spread projection unavailable — check connection.";
+                forecast.Narrative = "Spread projection unavailable â€” check connection.";
                 return forecast;
             }
 
