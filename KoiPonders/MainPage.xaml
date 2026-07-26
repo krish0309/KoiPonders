@@ -279,9 +279,11 @@
                     </Border>
                 </Grid>
 
-                <Button x:Name="AddBoundaryButton" Grid.Row="3" Text="＋  Add new boundary"
-                        Clicked="OnPolygonToolClicked" BackgroundColor="#2E7D32" TextColor="White"
-                        FontSize="14" HeightRequest="48" CornerRadius="14" />
+                <VerticalStackLayout Grid.Row="3" Spacing="8">
+                    <Button x:Name="AddBoundaryButton" Text="＋  Add new boundary"
+                            Clicked="OnPolygonToolClicked" BackgroundColor="#2E7D32" TextColor="White"
+                            FontSize="14" HeightRequest="48" CornerRadius="14" />
+                </VerticalStackLayout>
             </Grid>
         </Border>
 
@@ -329,7 +331,7 @@
 		<!-- Toggleable spread-forecast layer chip. Appears once a forecast exists. -->
 		<Border x:Name="SpreadLayerChip" IsVisible="False" ZIndex="15"
 				BackgroundColor="#F7FFFFFF" Stroke="#E4C6B4" StrokeThickness="1"
-				Padding="12,8" Margin="16,82,16,0"
+                Padding="12,8" Margin="16,112,16,0"
 				HorizontalOptions="Start" VerticalOptions="Start">
 			<Border.StrokeShape>
 				<RoundRectangle CornerRadius="14" />

@@ -29,10 +29,11 @@ public static class AlertService
             ["Sugarcane Aphid"] = ["Sorghum"],
             ["Wheat Rust"] = ["Wheat"],
             ["Stripe Rust"] = ["Wheat"],
+            ["Downy Mildew (Pseudoperonospora cubensis)"] = ["Cucumber", "Cucurbit"],
         };
 
     private static readonly string[] CropKeywords =
-        ["Corn", "Soybean", "Sorghum", "Wheat", "Cotton", "Rice", "Alfalfa", "Milo"];
+        ["Corn", "Soybean", "Sorghum", "Wheat", "Cotton", "Rice", "Alfalfa", "Milo", "Cucumber", "Cucurbit"];
 
     // ---------- matching ----------
 
@@ -108,6 +109,12 @@ public static class AlertService
 
     private static List<NeighborFarm>? _cache;
 
+    public static async Task SetFarmsAsync(IEnumerable<NeighborFarm> farms)
+    {
+        _cache = farms.Where(farm => farm.Location is not null).ToList();
+        await SaveAsync(_cache);
+    }
+
     public static async Task<List<NeighborFarm>> GetFarmsAsync()
     {
         if (_cache is not null) return _cache;
@@ -129,6 +136,29 @@ public static class AlertService
                         Acres = d.Acres,
                         Location = new MapPoint(d.Lon, d.Lat, SpatialReferences.Wgs84)
                     }).ToList();
+
+                    if (_cache.Count > 0 &&
+                        !_cache.Any(f => f.Crop.Contains("Cucumber", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var anchor = _cache[0].Location!;
+                        _cache.Add(new NeighborFarm
+                        {
+                            FarmName = "Merrimack Cucumber House",
+                            Owner = "L. Mercer",
+                            Crop = "Cucumber",
+                            Acres = 18.6,
+                            Location = new MapPoint(anchor.X + 0.004, anchor.Y - 0.004, SpatialReferences.Wgs84)
+                        });
+                        _cache.Add(new NeighborFarm
+                        {
+                            FarmName = "Contoocook Cucurbit Field",
+                            Owner = "S. Patel",
+                            Crop = "Cucumber and Summer Squash",
+                            Acres = 27.4,
+                            Location = new MapPoint(anchor.X - 0.005, anchor.Y + 0.003, SpatialReferences.Wgs84)
+                        });
+                        await SaveAsync(_cache);
+                    }
 
                     return _cache;
                 }
@@ -164,6 +194,8 @@ public static class AlertService
             ("Vandermeer Flats",      "A. Vandermeer","Grain Sorghum (Milo)",      64.5, -3.4, -1.2),
             ("Okonkwo Dryland",       "C. Okonkwo",   "Winter Wheat",             142.7,  4.2,  1.9),
             ("Beltran Circle 7",      "R. Beltran",   "Yellow Field Corn (Dent)", 105.3, -0.9, -4.6),
+            ("Merrimack Cucumber House", "L. Mercer", "Cucumber",                   18.6,  1.3,  1.6),
+            ("Contoocook Cucurbit Field", "S. Patel", "Cucumber and Summer Squash", 27.4, -1.8, -1.4),
         ];
 
         var farms = spec.Select(s => new NeighborFarm

@@ -141,10 +141,7 @@ public partial class IncidentReportPage : ContentPage
             (SeverityPicker.ItemsSource as List<string>)?
             .FirstOrDefault(s => s == _draft.Severity) ?? "MEDIUM";
 
-        // Nudge the default alert radius to match how far this thing actually spreads.
-        double km = RiskEngine.RadiusMetersFor(_draft.Severity) / 1000.0;
-        double miles = Math.Round(km * 0.621371 * 2, 1);
-        RadiusSlider.Value = Math.Clamp(miles < 1 ? 5 : miles, 1, 25);
+        RadiusSlider.Value = 5;
     }
 
     // ---------- alerting ----------

@@ -167,7 +167,20 @@ public partial class MainPage : ContentPage
                 await _reportStore.DeleteReportAsync(report.Id);
 #endif
 
-            var (parcels, _) = await FarmStore.LoadAsync();
+            var (parcels, incidents) = await FarmStore.LoadAsync();
+
+            if (parcels.Count == 0)
+            {
+                var preset = await FarmStore.LoadDemoPresetAsync();
+                parcels = preset.Parcels;
+                incidents = preset.Incidents;
+
+                if (preset.Farms.Count > 0)
+                    await AlertService.SetFarmsAsync(preset.Farms);
+
+                if (parcels.Count > 0)
+                    await FarmStore.SaveAsync(parcels, incidents);
+            }
 
             foreach (var parcel in parcels)
             {
@@ -192,12 +205,9 @@ public partial class MainPage : ContentPage
 
             ParcelCountLabel.Text = $"{_parcels.Count} total";
 
-            if (_parcels.FirstOrDefault()?.Geometry is { } geometry)
-                await mapView.SetViewpointGeometryAsync(geometry, 120);
+            await DrawNeighborsAsync();
+            await LoadIncidentsAsync();
         }
-
-        await DrawNeighborsAsync();
-        await LoadIncidentsAsync();
     }
 
     /// <summary>
